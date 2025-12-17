@@ -5,13 +5,13 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
 
-//N. B. devi cambiare il nome della classe
-public class NameBot implements LongPollingSingleThreadUpdateConsumer {
+public class GameBot implements LongPollingSingleThreadUpdateConsumer {
     private final TelegramClient telegramClient;
 
-    public NameBot(String botToken) {
+    public GameBot(String botToken) {
         telegramClient = new OkHttpTelegramClient(botToken);
     }
+
     @Override
     public void consume(Update update) {    //Eseguito se arriva un nuovo messaggio
         // We check if the update has a message and the message has text
@@ -20,14 +20,26 @@ public class NameBot implements LongPollingSingleThreadUpdateConsumer {
             String message_text = update.getMessage().getText();
             long chat_id = update.getMessage().getChatId();
 
-            if(update.getMessage().equals("/pizza")) {
-                message_text = "Buongiorno pizzeria ...";
+            String response;
+
+            switch (message_text) {
+                case "/help":
+                    response = """
+                        🎮 GameBot - Comandi disponibili:
+                        /help - Mostra questo messaggio
+                        /game <nome> - Cerca un videogioco
+                        /library - Mostra la tua libreria
+                        """;
+                    break;
+
+                default:
+                    response = "❓ Comando non riconosciuto. Usa /help";
             }
 
             SendMessage message = SendMessage // Create a message object
                     .builder()
                     .chatId(chat_id)
-                    .text(message_text)
+                    .text(response)
                     .build();
             try {
                 telegramClient.execute(message); // Sending our message object to user

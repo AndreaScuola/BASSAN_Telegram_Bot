@@ -1,7 +1,4 @@
-import org.apache.commons.configuration2.builder.fluent.Configurations;
 import org.telegram.telegrambots.longpolling.TelegramBotsLongPollingApplication;
-import javax.naming.ConfigurationException;
-import java.lang.module.Configuration;
 
 //Creazione bot token --> https://www.andreaminini.com/web/telegram/come-creare-un-bot-su-telegram
 
@@ -11,7 +8,7 @@ public class Main {
 
         // Using try-with-resources to allow autoclose to run upon finishing
         try (TelegramBotsLongPollingApplication botsApplication = new TelegramBotsLongPollingApplication()) {
-            botsApplication.registerBot(botToken, new NameBot(botToken));
+            botsApplication.registerBot(botToken, new GameBot(botToken));
             System.out.println("MyAmazingBot successfully started!");
             // Ensure this prcess wait forever
             Thread.currentThread().join();
