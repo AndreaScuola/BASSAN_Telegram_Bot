@@ -1,8 +1,12 @@
 import com.google.gson.Gson;
+import modelli.Game;
 import modelli.GameResponse;
 
-public class RawgService extends ApiClient {
+import java.util.List;
+import java.util.Random;
 
+public class RawgService extends ApiClient {
+    private final Random random = new Random();
     private final Gson gson = new Gson();
 
     public GameResponse selectGameByName(String name) {
@@ -14,4 +18,33 @@ public class RawgService extends ApiClient {
 
         return gson.fromJson(response.body(), GameResponse.class);
     }
+
+    public Game getRandomGame() {
+        //pagina random da RAWG
+        int randomPage = random.nextInt(500) + 1;
+
+        String params = "page_size=20&page=" + randomPage;
+        var response = getHttpResponse("games", params);
+
+        GameResponse gameResponse = new Gson().fromJson(response.body(), GameResponse.class);
+
+        if (gameResponse == null || gameResponse.results.isEmpty())
+            return null;
+
+        return gameResponse.results.get(
+                random.nextInt(gameResponse.results.size())
+        );
+    }
+
+    public List<Game> recommendByGenres(String genres, int limit) {
+        String params =
+                "genres=" + encode(genres) +
+                        "&ordering=-rating" +
+                        "&page_size=" + limit;
+
+        var response = getHttpResponse("games", params);
+        GameResponse gameResponse = new Gson().fromJson(response.body(), GameResponse.class);
+        return gameResponse != null ? gameResponse.results : List.of();
+    }
+
 }

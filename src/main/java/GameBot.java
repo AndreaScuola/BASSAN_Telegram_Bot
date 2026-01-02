@@ -1,3 +1,4 @@
+import modelli.GamePrint;
 import modelli.GameResponse;
 import modelli.Game;
 import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient;
@@ -20,11 +21,10 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
     @Override
     public void consume(Update update) {
 
-        if (!update.hasMessage() || !update.getMessage().hasText()) {
+        if (!update.hasMessage() || !update.getMessage().hasText())
             return;
-        }
 
-        String messageText = update.getMessage().getText().trim();
+        String messageText = update.getMessage().getText().trim().toLowerCase();
         long chatId = update.getMessage().getChatId();
         String response;
 
@@ -35,6 +35,8 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                     🎮 GameBot - Comandi disponibili
                     /help - Mostra questo messaggio
                     /game <nome> - Cerca un videogioco
+                    /random - Ritorna un videogioco random
+                    /recomend <genere> <numero> - Ritorna n videogiochi del genere specificato
                     /library - Mostra la tua libreria
                     """;
         }
@@ -55,49 +57,61 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                         response = "❌ Nessun gioco trovato con questo nome.";
                     } else {
                         Game game = gameResponse.results.get(0);
-
-                        // Piattaforme come stringa
-                        String piattaforme = "";
-                        if (game.platforms != null) {
-                            for (modelli.PlatformWrapper pw : game.platforms) {
-                                if (!piattaforme.isEmpty()) piattaforme += ", ";
-                                piattaforme += pw.platform.name;
-                            }
-                        }
-                        if (piattaforme.isEmpty()) piattaforme = "N/D";
-
-                        // Generi come stringa
-                        String generi = "";
-                        if (game.genres != null) {
-                            for (modelli.Genre g : game.genres) {
-                                if (!generi.isEmpty()) generi += ", ";
-                                generi += g.name;
-                            }
-                        }
-                        if (generi.isEmpty()) generi = "N/D";
-
-                        // Costruzione messaggio
-                        response = """
-                        🎮 %s
-                        🗓 Uscita: %s
-                        ⭐ Rating: %.1f
-                        🏆 Metacritic: %d
-                        🖥 Piattaforme: %s
-                        🏷 Generi: %s
-                        🖼 Immagine: %s
-                        """.formatted(
-                                game.name,
-                                game.released != null ? game.released : "N/D",
-                                game.rating,
-                                game.metacritic,
-                                piattaforme,
-                                generi,
-                                game.background_image != null ? game.background_image : "N/D"
-                        );
+                        response = GamePrint.format(game);
                     }
 
                 } catch (Exception e) {
                     response = "⚠️ Errore durante la richiesta al servizio RAWG.";
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        // ===== RANDOM =====
+        else if (messageText.equals("/random")) {
+            try {
+                Game randomGame = rawgService.getRandomGame();
+
+                if (randomGame == null)
+                    response = "❌ Nessun gioco trovato.";
+                else
+                    response = GamePrint.format(randomGame);
+
+            } catch (Exception e) {
+                response = "⚠️ Errore durante la richiesta RAWG.";
+            }
+        }
+
+        // ===== RECOMMEND =====
+        else if (messageText.startsWith("/recommend")) {
+            String[] parts = messageText.split(" ");
+            if (parts.length < 2)
+                response = "❗ Uso corretto:\n/recommend <generi> <numero>";
+            else {
+                String generi = parts[1];
+                int limit = 5; //default
+
+                if (parts.length >= 3) {
+                    try {
+                        limit = Integer.parseInt(parts[2]);
+                    } catch (Exception e) {}
+                }
+
+                try {
+                    var games = rawgService.recommendByGenres(generi, limit);
+
+                    if (games.isEmpty()) {
+                        response = "❌ Nessun gioco trovato per questi generi.";
+                    } else {
+                        StringBuilder sb = new StringBuilder("🎯 Giochi consigliati:\n\n");
+                        for (Game g : games) {
+                            sb.append(GamePrint.format(g)).append("\n");
+                        }
+                        response = sb.toString();
+                    }
+
+                } catch (Exception e) {
+                    response = "⚠️ Errore durante la richiesta RAWG.";
                     e.printStackTrace();
                 }
             }
