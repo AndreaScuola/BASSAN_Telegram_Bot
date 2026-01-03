@@ -45,6 +45,7 @@ public class ApiClient {
         }
     }
 
+    //Usata per permettere l'invio di caratteri come spazio nell'url
     protected static String encode(String value) {
         return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }

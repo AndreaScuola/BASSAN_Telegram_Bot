@@ -1,6 +1,8 @@
 import com.google.gson.Gson;
 import modelli.Game;
 import modelli.GameResponse;
+import modelli.Genre;
+import modelli.GenreResponse;
 
 import java.util.List;
 import java.util.Random;
@@ -45,6 +47,13 @@ public class RawgService extends ApiClient {
         var response = getHttpResponse("games", params);
         GameResponse gameResponse = new Gson().fromJson(response.body(), GameResponse.class);
         return gameResponse != null ? gameResponse.results : List.of();
+    }
+
+    public List<Genre> getAllGenres(){
+        String endpoint = "genres";
+        var response = getHttpResponse(endpoint);
+        GenreResponse genreResponse = new Gson().fromJson(response.body(), GenreResponse.class);
+        return genreResponse != null ? genreResponse.results : List.of();
     }
 
 }
