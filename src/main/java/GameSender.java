@@ -12,10 +12,9 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import java.util.List;
 
 public class GameSender {
-
-    public static void sendGame(TelegramClient client, long chatId, Game game) throws TelegramApiException {
+    public static void sendGame(TelegramClient client, long chatId, Game game, long telegramId) throws TelegramApiException {
         String caption = buildText(game);
-        InlineKeyboardMarkup keyboard = buildKeyboard(game);
+        InlineKeyboardMarkup keyboard = buildKeyboard(game, telegramId);
 
         //Se esiste l'immagine -> SendPhoto
         if (game.background_image != null && !game.background_image.isBlank()) {
@@ -29,13 +28,12 @@ public class GameSender {
             client.execute(photo);
         } else {
             //Se non c'è l'immagine
-            SendMessage msg = SendMessage.builder()
+            SendPhoto photo = SendPhoto.builder()
                     .chatId(chatId)
-                    .text(caption)
+                    .caption(caption)
                     .replyMarkup(keyboard)
                     .build();
-
-            client.execute(msg);
+            client.execute(photo);
         }
     }
 
@@ -81,14 +79,20 @@ public class GameSender {
     }
 
     // ===== BOTTONI =====
-    private static InlineKeyboardMarkup buildKeyboard(Game game) {
+    private static InlineKeyboardMarkup buildKeyboard(Game game, long telegramId) {
+        Database db = Database.getInstance();
+        boolean inLibrary = db.isInLibrary(telegramId, game.id);
+        boolean inWishlist = db.isInWishlist(telegramId, game.id);
+        String textLibraryBtn = inLibrary ? "❌ Rimuovi Libreria" : "➕ Libreria";
+        String textWishlistBtn = inWishlist ? "❌ Rimuovi Wishlist" : "❤️ Wishlist";
+
         InlineKeyboardButton libraryBtn = InlineKeyboardButton.builder()
-                .text("➕ Libreria")
+                .text(textLibraryBtn)
                 .callbackData("LIB_" + game.id)
                 .build();
 
         InlineKeyboardButton wishlistBtn = InlineKeyboardButton.builder()
-                .text("❤️ Wishlist")
+                .text(textWishlistBtn)
                 .callbackData("WISH_" + game.id)
                 .build();
 

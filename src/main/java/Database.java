@@ -36,12 +36,12 @@ public class Database {
         return true;
     }
 
-    public void insertUser(int telegramId, String username) {
+    public void insertUser(long telegramId, String username) {
         String query = "INSERT OR IGNORE INTO Users (telegram_id, username) VALUES (?, ?)";
 
         try {
             PreparedStatement stmt = connection.prepareStatement(query);
-            stmt.setInt(1, telegramId);
+            stmt.setLong(1, telegramId);
             stmt.setString(2, username);
             stmt.executeUpdate();
         } catch (SQLException e) {
@@ -49,17 +49,16 @@ public class Database {
         }
     }
 
-    public int getUserId(int telegramId) {
+    public int getUserId(long telegramId) {
         String query = "SELECT id FROM Users WHERE telegram_id = ?";
 
         try {
             PreparedStatement stmt = connection.prepareStatement(query);
-            stmt.setInt(1, telegramId);
+            stmt.setLong(1, telegramId);
             ResultSet rs = stmt.executeQuery();
 
             if (rs.next())
                 return rs.getInt("id");
-
         } catch (SQLException e) {
             System.err.println("Errore getUserId: " + e.getMessage());
         }
@@ -83,7 +82,7 @@ public class Database {
         }
     }
 
-    public void addToLibrary(int telegramId, Game game) {
+    public void addToLibrary(long telegramId, Game game) {
         insertGame(game);
         int userId = getUserId(telegramId);
 
@@ -99,7 +98,39 @@ public class Database {
         }
     }
 
-    public void addToWishlist(int telegramId, Game game) {
+    public void removeFromLibrary(long telegramId, int gameId) {
+        int userId = getUserId(telegramId);
+        String query = "DELETE FROM Library WHERE user_id = ? AND game_id = ?";
+        try {
+            PreparedStatement stmt = connection.prepareStatement(query);
+            stmt.setInt(1, userId);
+            stmt.setInt(2, gameId);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Errore removeFromLibrary: " + e.getMessage());
+        }
+    }
+
+    public boolean isInLibrary(long telegramId, int gameId) {
+        int userId = getUserId(telegramId);
+        if(userId == -1)
+            return false;
+
+        String query = "SELECT id FROM Library WHERE user_id = ? AND game_id = ?";
+        try{
+            PreparedStatement stmt = connection.prepareStatement(query);
+            stmt.setInt(1, userId);
+            stmt.setInt(2, gameId);
+
+            ResultSet rs = stmt.executeQuery();
+            return rs.next();
+        } catch (SQLException e) {
+            System.err.println("Errore isInLibrary: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public void addToWishlist(long telegramId, Game game) {
         insertGame(game);
         int userId = getUserId(telegramId);
 
@@ -112,6 +143,38 @@ public class Database {
             stmt.executeUpdate();
         } catch (SQLException e) {
             System.err.println("Errore addToWishlist: " + e.getMessage());
+        }
+    }
+
+    public void removeFromWishlist(long telegramId, int gameId) {
+        int userId = getUserId(telegramId);
+        String query = "DELETE FROM Wishlist WHERE user_id = ? AND game_id = ?";
+        try {
+            PreparedStatement stmt = connection.prepareStatement(query);
+            stmt.setInt(1, userId);
+            stmt.setInt(2, gameId);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Errore removeFromWishlist: " + e.getMessage());
+        }
+    }
+
+    public boolean isInWishlist(long telegramId, int gameId) {
+        int userId = getUserId(telegramId);
+        if(userId == -1)
+            return false;
+
+        String query = "SELECT id FROM Wishlist WHERE user_id = ? AND game_id = ?";
+        try{
+            PreparedStatement stmt = connection.prepareStatement(query);
+            stmt.setInt(1, userId);
+            stmt.setInt(2, gameId);
+
+            ResultSet rs = stmt.executeQuery();
+            return rs.next();
+        } catch (SQLException e) {
+            System.err.println("Errore isInWishlist: " + e.getMessage());
+            return false;
         }
     }
 }

@@ -18,6 +18,27 @@ public class RawgService extends ApiClient {
         gson = new Gson();
     }
 
+    public Game selectGameById(int id) {
+        String endpoint = "games/" + id;
+        String params = "page_size=1";
+        var response = getHttpResponse(endpoint, params);
+
+        if (response.statusCode() != 200) {
+            System.err.println("ERRORE API RAWG: " + response.statusCode());
+            return null;
+        }
+
+        Game game = gson.fromJson(response.body(), Game.class);
+
+        if (game == null || game.id == 0) {
+            System.err.println("Nessun risultato trovato per ID: " + id);
+            return null;
+        }
+
+        return game;
+    }
+
+
     public GameResponse selectGameByName(String name) {
         String params = "search=" + encode(name) + "&page_size=1";
         var response = getHttpResponse("games", params);

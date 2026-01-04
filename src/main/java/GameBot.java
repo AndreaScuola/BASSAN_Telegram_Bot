@@ -20,22 +20,68 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
 
     @Override
     public void consume(Update update) {
+        long chatId;
+        long telegramId;
+        Database db = Database.getInstance();
+
         // ===== CALLBACK DEI BOTTONI =====
         if (update.hasCallbackQuery()) {
+            chatId = update.getCallbackQuery().getMessage().getChatId();
+            telegramId = update.getCallbackQuery().getFrom().getId();
+
+            //Inserisce l'utente nella tabella -> Se c'è già non lo inserisce
+            db.insertUser(telegramId, update.getCallbackQuery().getFrom().getUserName());
+
             String data = update.getCallbackQuery().getData();
-            long chatId = update.getCallbackQuery().getMessage().getChatId();
 
-            System.out.println("CLICK: " + data);
+            String infoMessage = ""; //MESSAGGIO TEMPORANEO
 
-            // RISPOSTA TEMPORANEA
+            if (data.startsWith("LIB_")) {
+                int gameId = Integer.parseInt(data.split("_")[1]);
+                if (db.isInLibrary(telegramId, gameId)) {
+                    db.removeFromLibrary(telegramId, gameId);
+                    infoMessage = "Gioco rimosso dalla Libreria!";
+                } else {
+                    Game g = rawgService.selectGameById(gameId);
+                    if (g != null) {
+                        db.addToLibrary(telegramId, g);
+                        infoMessage = "✅ Gioco aggiunto alla Libreria!";
+
+                        System.out.println("LIBRARY CHECK: " + db.isInLibrary(telegramId, gameId));
+
+
+
+                    } else {
+                        infoMessage = "❌ Gioco non trovato su RAWG.";
+                    }
+                }
+            } else if (data.startsWith("WISH_")) {
+                int gameId = Integer.parseInt(data.split("_")[1]);
+                if (db.isInWishlist(telegramId, gameId)) {
+                    db.removeFromWishlist(telegramId, gameId);
+                    infoMessage = "Gioco rimosso dalla Wishlist!";
+                } else {
+                    Game g = rawgService.selectGameById(gameId);
+                    if (g != null) {
+                        db.addToWishlist(telegramId, g);
+                        infoMessage = "❤️ Gioco aggiunto alla Wishlist!";
+                    } else {
+                        infoMessage = "❌ Gioco non trovato su RAWG.";
+                    }
+                }
+            }
+
+            // Risposta temporanea al click del bottone (alert piccolo)
             AnswerCallbackQuery answer = AnswerCallbackQuery.builder()
                     .callbackQueryId(update.getCallbackQuery().getId())
-                    .text("✔️ Azione ricevuta")
-                    .showAlert(false)
+                    .text(infoMessage) //TESTO TEMPORANEO
+                    .showAlert(false)  //true per alert popup, false per notifica in basso
                     .build();
             try {
                 telegramClient.execute(answer);
-            } catch (TelegramApiException e) {}
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
+            }
 
             return;
         }
@@ -44,8 +90,14 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
         if (!update.hasMessage() || !update.getMessage().hasText())
             return;
 
+        chatId = update.getMessage().getChatId();
+        telegramId = update.getMessage().getFrom().getId();
+
+        //Inserisce l'utente nella tabella -> Se c'è già non lo inserisce
+        db.insertUser(telegramId, update.getMessage().getFrom().getUserName());
+
+
         String messageText = update.getMessage().getText().trim().toLowerCase();
-        long chatId = update.getMessage().getChatId();
         String response;
 
         // ===== /help =====
@@ -81,7 +133,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                         response = "Nessun gioco trovato.";
                     else {
                         Game game = gameResponse.results.get(0);
-                        GameSender.sendGame(telegramClient, chatId, game);
+                        GameSender.sendGame(telegramClient, chatId, game, telegramId);
                         return;
                     }
                 } catch (Exception e) {
@@ -100,7 +152,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                 if (parts.length == 1) {
                     List<Game> games = rawgService.getRandomGame(limit);
                     for (Game g : games)
-                        GameSender.sendGame(telegramClient, chatId, g);
+                        GameSender.sendGame(telegramClient, chatId, g, telegramId);
                     return;
                 }
 
@@ -118,7 +170,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
 
                     List<Game> games = rawgService.getRandomGame(limit);
                     for (Game g : games)
-                        GameSender.sendGame(telegramClient, chatId, g);
+                        GameSender.sendGame(telegramClient, chatId, g, telegramId);
                     return;
                 }
 
@@ -144,7 +196,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                         response = "Nessun gioco trovato per il genere: " + genre;
                     else {
                         for (Game g : games)
-                            GameSender.sendGame(telegramClient, chatId, g);
+                            GameSender.sendGame(telegramClient, chatId, g, telegramId);
                         return;
                     }
                 }
@@ -185,7 +237,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                         response = "Nessun gioco trovato.";
                     else {
                         for (Game g : games)
-                            GameSender.sendGame(telegramClient, chatId, g);
+                            GameSender.sendGame(telegramClient, chatId, g, telegramId);
 
                         return;
                     }
