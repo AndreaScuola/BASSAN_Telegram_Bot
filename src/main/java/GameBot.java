@@ -7,15 +7,15 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
+import java.util.List;
 
 public class GameBot implements LongPollingSingleThreadUpdateConsumer {
-
     private final TelegramClient telegramClient;
     private final RawgService rawgService;
 
     public GameBot(String botToken) {
-        this.telegramClient = new OkHttpTelegramClient(botToken);
-        this.rawgService = new RawgService();
+        telegramClient = new OkHttpTelegramClient(botToken);
+        rawgService = new RawgService();
     }
 
     @Override
@@ -50,13 +50,15 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
 
         // ===== /help =====
         if (messageText.equals("/help")) {
-
             response = """
                     🎮 GameBot - Comandi disponibili
                     /help - Mostra questo messaggio
                     /game <nome> - Cerca un videogioco
                     /random - Ritorna un videogioco random
-                    /recomend <genere> <numero> - Ritorna n videogiochi del genere specificato
+                    /random <numero> - Ritorna N videogiochi random
+                    /recommend <genere> - Ritorna 5 videogiochi del genere specificato
+                    /recommend <genere> <numero> - Ritorna N videogiochi del genere specificato
+                    /genres - Ritorna la lista di tutti i generi disponibili
                     /library - Mostra la tua libreria
                     """;
         }
@@ -65,17 +67,17 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
         else if (messageText.startsWith("/game")) {
             String[] parts = messageText.split(" ", 2);
 
-            if (parts.length < 2 || parts[1].isBlank()) {
+            if (parts.length < 2 || parts[1].isBlank())
                 response = "Uso corretto:\n/game <nome del gioco>";
-            } else {
+            else {
                 String gameName = parts[1];
 
                 try {
                     GameResponse gameResponse = rawgService.selectGameByName(gameName);
 
-                    if (gameResponse == null || gameResponse.results.isEmpty()) {
+                    if (gameResponse == null || gameResponse.results.isEmpty())
                         response = "Nessun gioco trovato.";
-                    } else {
+                    else {
                         Game game = gameResponse.results.get(0);
                         GameSender.sendGame(telegramClient, chatId, game);
                         return;
@@ -87,13 +89,30 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
         }
 
         // ===== RANDOM =====
-        else if (messageText.equals("/random")) {
+        else if (messageText.startsWith("/random")) {
+            String[] parts = messageText.split(" ");
+            int limit = 1;
+
+            if (parts.length == 2) {
+                try {
+                    limit = Integer.parseInt(parts[1]);
+
+                    if(limit < 1)
+                        limit = 1;
+                    else if(limit > 20)
+                        limit = 20;
+                }
+                catch (Exception e) {}
+            }
+
             try {
-                Game game = rawgService.getRandomGame();
-                if (game == null)
+                List<Game> games = rawgService.getRandomGame(limit);
+                if (games == null)
                     response = "Nessun gioco trovato.";
                 else {
-                    GameSender.sendGame(telegramClient, chatId, game);
+                    for (Game g : games)
+                        GameSender.sendGame(telegramClient, chatId, g);
+
                     return;
                 }
             } catch (Exception e) {
@@ -104,15 +123,20 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
         // ===== RECOMMEND =====
         else if (messageText.startsWith("/recommend")) {
             String[] parts = messageText.split(" ");
-            if (parts.length < 2) {
-                response = "Uso corretto:\n/recommend <generi> <numero>";
-            } else {
+            if (parts.length < 2)
+                response = "Uso corretto:\n/recommend <genere> <numero>";
+            else {
                 String generi = parts[1];
                 int limit = 5;
 
                 if (parts.length >= 3) {
                     try {
                         limit = Integer.parseInt(parts[2]);
+
+                        if(limit < 1)
+                            limit = 5;
+                        else if(limit > 20)
+                            limit = 20;
                     }
                     catch (Exception e) {}
                 }
@@ -120,16 +144,14 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                 try {
                     var games = rawgService.recommendByGenres(generi, limit);
 
-                    if (games.isEmpty()) {
+                    if (games.isEmpty())
                         response = "Nessun gioco trovato.";
-                    } else {
-                        for (Game g : games) {
+                    else {
+                        for (Game g : games)
                             GameSender.sendGame(telegramClient, chatId, g);
-                            Thread.sleep(300); // anti-rate-limit
-                        }
+
                         return;
                     }
-
                 } catch (Exception e) {
                     response = "Errore RAWG.";
                 }

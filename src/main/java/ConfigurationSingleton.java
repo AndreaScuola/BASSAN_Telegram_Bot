@@ -5,6 +5,7 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 public class ConfigurationSingleton {
     private static ConfigurationSingleton instance;
     private PropertiesConfiguration config;
+
     private ConfigurationSingleton(){
         Configurations configs = new Configurations();
         try {

@@ -9,23 +9,16 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.generics.TelegramClient;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
-
 import java.util.List;
 
 public class GameSender {
 
-    public static void sendGame(
-            TelegramClient client,
-            long chatId,
-            Game game
-    ) throws TelegramApiException {
-
+    public static void sendGame(TelegramClient client, long chatId, Game game) throws TelegramApiException {
         String caption = buildText(game);
         InlineKeyboardMarkup keyboard = buildKeyboard(game);
 
         //Se esiste l'immagine -> SendPhoto
         if (game.background_image != null && !game.background_image.isBlank()) {
-
             SendPhoto photo = SendPhoto.builder()
                     .chatId(chatId)
                     .photo(new InputFile(game.background_image))
@@ -34,9 +27,8 @@ public class GameSender {
                     .build();
 
             client.execute(photo);
-
         } else {
-            //fallback senza immagine
+            //Se non c'è l'immagine
             SendMessage msg = SendMessage.builder()
                     .chatId(chatId)
                     .text(caption)
@@ -49,20 +41,22 @@ public class GameSender {
 
     // ===== TESTO =====
     private static String buildText(Game game) {
-
         String piattaforme = "";
         if (game.platforms != null) {
             for (PlatformWrapper pw : game.platforms) {
-                if (!piattaforme.isEmpty()) piattaforme += ", ";
+                if (!piattaforme.isEmpty())
+                    piattaforme += ", ";
                 piattaforme += pw.platform.name;
             }
         }
-        if (piattaforme.isEmpty()) piattaforme = "N/D";
+        if (piattaforme.isEmpty())
+            piattaforme = "N/D";
 
         String generi = "";
         if (game.genres != null) {
             for (Genre g : game.genres) {
-                if (!generi.isEmpty()) generi += ", ";
+                if (!generi.isEmpty())
+                    generi += ", ";
                 generi += g.name;
             }
         }
@@ -88,7 +82,6 @@ public class GameSender {
 
     // ===== BOTTONI =====
     private static InlineKeyboardMarkup buildKeyboard(Game game) {
-
         InlineKeyboardButton libraryBtn = InlineKeyboardButton.builder()
                 .text("➕ Libreria")
                 .callbackData("LIB_" + game.id)

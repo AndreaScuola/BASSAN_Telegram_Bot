@@ -6,7 +6,6 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 
 public class ApiClient {
-
     private static final String RAWG_BASE_URL = "https://api.rawg.io/api/";
     private static final String API_KEY = ConfigurationSingleton.getInstance().getProperty("APIKEY_RAWG");
     private final HttpClient client = HttpClient.newHttpClient();
@@ -21,7 +20,6 @@ public class ApiClient {
                     .build();
 
             return client.send(request, HttpResponse.BodyHandlers.ofString());
-
         } catch (Exception e) {
             throw new RuntimeException("Errore chiamata API RAWG", e);
         }
@@ -39,7 +37,6 @@ public class ApiClient {
                     .build();
 
             return client.send(request, HttpResponse.BodyHandlers.ofString());
-
         } catch (Exception e) {
             throw new RuntimeException("Errore chiamata API RAWG", e);
         }
