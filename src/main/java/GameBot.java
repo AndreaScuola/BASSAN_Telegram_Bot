@@ -30,7 +30,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
             telegramId = update.getCallbackQuery().getFrom().getId();
 
             //Inserisce l'utente nella tabella -> Se c'è già non lo inserisce
-            db.insertUser(telegramId, update.getCallbackQuery().getFrom().getUserName());
+            db.insertUser(telegramId);
 
             String data = update.getCallbackQuery().getData();
 
@@ -46,11 +46,6 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                     if (g != null) {
                         db.addToLibrary(telegramId, g);
                         infoMessage = "✅ Gioco aggiunto alla Libreria!";
-
-                        System.out.println("LIBRARY CHECK: " + db.isInLibrary(telegramId, gameId));
-
-
-
                     } else {
                         infoMessage = "❌ Gioco non trovato su RAWG.";
                     }
@@ -94,7 +89,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
         telegramId = update.getMessage().getFrom().getId();
 
         //Inserisce l'utente nella tabella -> Se c'è già non lo inserisce
-        db.insertUser(telegramId, update.getMessage().getFrom().getUserName());
+        db.insertUser(telegramId);
 
 
         String messageText = update.getMessage().getText().trim().toLowerCase();

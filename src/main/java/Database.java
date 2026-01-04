@@ -1,5 +1,4 @@
 import modelli.Game;
-
 import java.sql.*;
 
 public class Database {
@@ -10,7 +9,7 @@ public class Database {
         try{
             String url = "jdbc:sqlite:Database/GameManager.db";
             connection = DriverManager.getConnection(url);
-            System.out.println("Connected to database successfully");
+            System.out.println("Connesso al db locale");
         } catch (SQLException e){
             System.err.println("Errore connessione: " + e.getMessage());
         }
@@ -36,13 +35,12 @@ public class Database {
         return true;
     }
 
-    public void insertUser(long telegramId, String username) {
-        String query = "INSERT OR IGNORE INTO Users (telegram_id, username) VALUES (?, ?)";
+    public void insertUser(long telegramId) {
+        String query = "INSERT OR IGNORE INTO Users (telegram_id) VALUES (?)";
 
         try {
             PreparedStatement stmt = connection.prepareStatement(query);
             stmt.setLong(1, telegramId);
-            stmt.setString(2, username);
             stmt.executeUpdate();
         } catch (SQLException e) {
             System.err.println("Errore insertUser: " + e.getMessage());
@@ -86,6 +84,11 @@ public class Database {
         insertGame(game);
         int userId = getUserId(telegramId);
 
+        if (userId == -1) {
+            System.err.println("addToLibrary: userId = -1");
+            return;
+        }
+
         String query = "INSERT OR IGNORE INTO Library (user_id, game_id) VALUES (?, ?)";
 
         try {
@@ -116,7 +119,7 @@ public class Database {
         if(userId == -1)
             return false;
 
-        String query = "SELECT id FROM Library WHERE user_id = ? AND game_id = ?";
+        String query = "SELECT user_id FROM Library WHERE user_id = ? AND game_id = ?";
         try{
             PreparedStatement stmt = connection.prepareStatement(query);
             stmt.setInt(1, userId);
@@ -161,10 +164,12 @@ public class Database {
 
     public boolean isInWishlist(long telegramId, int gameId) {
         int userId = getUserId(telegramId);
-        if(userId == -1)
+        if(userId == -1){
+            System.out.println("isInWishlist: userId = -1");
             return false;
+        }
 
-        String query = "SELECT id FROM Wishlist WHERE user_id = ? AND game_id = ?";
+        String query = "SELECT user_id FROM Wishlist WHERE user_id = ? AND game_id = ?";
         try{
             PreparedStatement stmt = connection.prepareStatement(query);
             stmt.setInt(1, userId);
