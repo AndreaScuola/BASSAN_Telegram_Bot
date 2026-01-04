@@ -4,7 +4,9 @@ import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient;
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
 import java.util.List;
@@ -34,10 +36,40 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
 
             String data = update.getCallbackQuery().getData();
 
-            String infoMessage = ""; //MESSAGGIO TEMPORANEO
+            String infoMessage = "";
 
-            if (data.startsWith("LIB_")) {
+            if (data.equals("DISABLED")) {
+                //Risposta temporanea al click del bottone
+                AnswerCallbackQuery answer = AnswerCallbackQuery.builder()
+                        .callbackQueryId(update.getCallbackQuery().getId())
+                        .text("⏳ Attendi...")
+                        .showAlert(false)  //true per alert popup, false per notifica in basso
+                        .build();
+                try {
+                    telegramClient.execute(answer);
+                } catch (TelegramApiException e) {
+                    System.err.println("Errore pulsanti: " + e.getMessage());
+                }
+
+                return;
+            } else if (data.startsWith("LIB_")) {
                 int gameId = Integer.parseInt(data.split("_")[1]);
+                long messageId = update.getCallbackQuery().getMessage().getMessageId();
+
+                //Metto il pulsante di attesa
+                EditMessageReplyMarkup editMarkup = EditMessageReplyMarkup.builder()
+                        .chatId(chatId)
+                        .messageId((int)messageId)
+                        .replyMarkup(GameSender.buildLoadingKeyboard())
+                        .build();
+
+                try {
+                    telegramClient.execute(editMarkup);
+                } catch (TelegramApiException e) {
+                    System.err.println("Errore pulsanti: " + e.getMessage());
+                }
+
+                //Eseguo le operazioni
                 if (db.isInLibrary(telegramId, gameId)) {
                     db.removeFromLibrary(telegramId, gameId);
                     infoMessage = "Gioco rimosso dalla Libreria!";
@@ -50,8 +82,39 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                         infoMessage = "❌ Gioco non trovato su RAWG.";
                     }
                 }
+
+                Game g = rawgService.selectGameById(gameId);
+
+                //Rimetto i pulsanti normali
+                editMarkup = EditMessageReplyMarkup.builder()
+                        .chatId(chatId)
+                        .messageId((int) messageId)
+                        .replyMarkup(GameSender.buildKeyboard(g, telegramId))
+                        .build();
+
+                try {
+                    telegramClient.execute(editMarkup);
+                } catch (TelegramApiException e) {
+                    System.err.println("Errore pulsanti: " + e.getMessage());
+                }
             } else if (data.startsWith("WISH_")) {
                 int gameId = Integer.parseInt(data.split("_")[1]);
+                long messageId = update.getCallbackQuery().getMessage().getMessageId();
+
+                //Metto il pulsante di attesa
+                EditMessageReplyMarkup editMarkup = EditMessageReplyMarkup.builder()
+                        .chatId(chatId)
+                        .messageId((int)messageId)
+                        .replyMarkup(GameSender.buildLoadingKeyboard())
+                        .build();
+
+                try {
+                    telegramClient.execute(editMarkup);
+                } catch (TelegramApiException e) {
+                    System.err.println("Errore pulsanti: " + e.getMessage());
+                }
+
+                //Eseguo le operazioni
                 if (db.isInWishlist(telegramId, gameId)) {
                     db.removeFromWishlist(telegramId, gameId);
                     infoMessage = "Gioco rimosso dalla Wishlist!";
@@ -64,19 +127,57 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                         infoMessage = "❌ Gioco non trovato su RAWG.";
                     }
                 }
+
+                Game g = rawgService.selectGameById(gameId);
+
+                //Rimetto i pulsanti normali
+                editMarkup = EditMessageReplyMarkup.builder()
+                        .chatId(chatId)
+                        .messageId((int) messageId)
+                        .replyMarkup(GameSender.buildKeyboard(g, telegramId))
+                        .build();
+
+                try {
+                    telegramClient.execute(editMarkup);
+                } catch (TelegramApiException e) {
+                    System.err.println("Errore pulsanti: " + e.getMessage());
+                }
+            }
+            /*
+            // ===== AGGIORNA I BOTTONI =====
+            try {
+                int messageId = update.getCallbackQuery().getMessage().getMessageId();
+
+                // Recuperi di nuovo il gioco (serve per ricreare i pulsanti)
+                int gameId = Integer.parseInt(data.split("_")[1]);
+                Game game = rawgService.selectGameById(gameId);
+
+                if (game != null) {
+                    InlineKeyboardMarkup newKeyboard = GameSender.buildKeyboard(game, telegramId);
+
+                    EditMessageReplyMarkup editMarkup = EditMessageReplyMarkup.builder()
+                            .chatId(chatId)
+                            .messageId(messageId)
+                            .replyMarkup(newKeyboard)
+                            .build();
+
+                    telegramClient.execute(editMarkup);
+                }
+            } catch (TelegramApiException e) {
+                System.err.println("Errore aggiornamento pulsanti: " + e.getMessage());
             }
 
-            // Risposta temporanea al click del bottone (alert piccolo)
+            //Risposta temporanea al click del bottone
             AnswerCallbackQuery answer = AnswerCallbackQuery.builder()
                     .callbackQueryId(update.getCallbackQuery().getId())
-                    .text(infoMessage) //TESTO TEMPORANEO
+                    .text(infoMessage)
                     .showAlert(false)  //true per alert popup, false per notifica in basso
                     .build();
             try {
                 telegramClient.execute(answer);
             } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
+                System.err.println("Errore pulsanti: " + e.getMessage());
+            }*/
 
             return;
         }

@@ -9,7 +9,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.generics.TelegramClient;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
-import java.util.List;
+import java.util.ArrayList;
 
 public class GameSender {
     public static void sendGame(TelegramClient client, long chatId, Game game, long telegramId) throws TelegramApiException {
@@ -79,7 +79,7 @@ public class GameSender {
     }
 
     // ===== BOTTONI =====
-    private static InlineKeyboardMarkup buildKeyboard(Game game, long telegramId) {
+    public static InlineKeyboardMarkup buildKeyboard(Game game, long telegramId) {
         Database db = Database.getInstance();
         boolean inLibrary = db.isInLibrary(telegramId, game.id);
         boolean inWishlist = db.isInWishlist(telegramId, game.id);
@@ -96,9 +96,35 @@ public class GameSender {
                 .callbackData("WISH_" + game.id)
                 .build();
 
+        InlineKeyboardButton rawgBtn = InlineKeyboardButton.builder()
+                .text("🔍 Apri su RAWG")
+                .url("https://rawg.io/games/" + game.id)
+                .build();
+
+        InlineKeyboardRow row1 = new InlineKeyboardRow();
+        row1.add(libraryBtn);
+        row1.add(wishlistBtn);
+
+        InlineKeyboardRow row2 = new InlineKeyboardRow();
+        row2.add(rawgBtn);
+
+        ArrayList<InlineKeyboardRow> rows = new ArrayList<>();
+        rows.add(row1);
+        rows.add(row2);
+
+        return InlineKeyboardMarkup.builder()
+                .keyboard(rows)
+                .build();
+    }
+
+    public static InlineKeyboardMarkup buildLoadingKeyboard() {
+        InlineKeyboardButton loadingBtn = InlineKeyboardButton.builder()
+                .text("⏳ Aggiornamento...")
+                .callbackData("DISABLED")
+                .build();
+
         InlineKeyboardRow row = new InlineKeyboardRow();
-        row.add(libraryBtn);
-        row.add(wishlistBtn);
+        row.add(loadingBtn);
 
         return InlineKeyboardMarkup.builder()
                 .keyboardRow(row)

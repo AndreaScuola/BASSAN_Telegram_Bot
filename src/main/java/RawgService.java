@@ -38,7 +38,6 @@ public class RawgService extends ApiClient {
         return game;
     }
 
-
     public GameResponse selectGameByName(String name) {
         String params = "search=" + encode(name) + "&page_size=1";
         var response = getHttpResponse("games", params);
