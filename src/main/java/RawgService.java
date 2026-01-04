@@ -39,7 +39,36 @@ public class RawgService extends ApiClient {
 
         List<Game> results = new ArrayList<>(gameResponse.results);
         Collections.shuffle(results); //Mescola la lista
-        return results.subList(0, limit); //Ritorna solo i primi "limit"
+        return results.subList(0, Math.min(limit, results.size())); //Ritorna il minimo tra "limit" ed il numero di risultati
+    }
+
+    public List<Game> getRandomByGenre(String genre, int limit) {
+        List<Game> collected = new ArrayList<>();
+        Random random = new Random();
+
+        int maxPages = 10; //Limite di sicurezza -> Se non trovo "limit" risultati alla prima pagine ne prendo altre e faccio altri tentativi
+        int attempts = 0;
+
+        while (collected.size() < limit && attempts < maxPages) {
+            int page = random.nextInt(50) + 1; //Pagina random
+            String params = "genres=" + genre +
+                    "&page_size=20" +
+                    "&page=" + page;
+
+            var response = getHttpResponse("games", params);
+            GameResponse gameResponse = new Gson().fromJson(response.body(), GameResponse.class);
+
+            if (gameResponse != null && gameResponse.results != null)
+                collected.addAll(gameResponse.results);
+
+            attempts++;
+        }
+
+        if (collected.isEmpty())
+            return Collections.emptyList();
+
+        Collections.shuffle(collected);
+        return collected.subList(0, Math.min(limit, collected.size()));
     }
 
     public List<Game> recommendByGenres(String genres, int limit) {

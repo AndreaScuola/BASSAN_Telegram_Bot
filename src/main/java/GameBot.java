@@ -54,11 +54,13 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                     🎮 GameBot - Comandi disponibili
                     /help - Mostra questo messaggio
                     /game <nome> - Cerca un videogioco
+                    /genres - Ritorna la lista di tutti i generi disponibili
                     /random - Ritorna un videogioco random
                     /random <numero> - Ritorna N videogiochi random
+                    /random genre <genere> - Ritorna un videogioco random del genere specificato
+                    /random genre <genere> <numero> - Ritorna N videogiochi random del genere specificato
                     /recommend <genere> - Ritorna 5 videogiochi del genere specificato
                     /recommend <genere> <numero> - Ritorna N videogiochi del genere specificato
-                    /genres - Ritorna la lista di tutti i generi disponibili
                     /library - Mostra la tua libreria
                     """;
         }
@@ -93,30 +95,65 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
             String[] parts = messageText.split(" ");
             int limit = 1;
 
-            if (parts.length == 2) {
-                try {
-                    limit = Integer.parseInt(parts[1]);
-
-                    if(limit < 1)
-                        limit = 1;
-                    else if(limit > 20)
-                        limit = 20;
-                }
-                catch (Exception e) {}
-            }
-
             try {
-                List<Game> games = rawgService.getRandomGame(limit);
-                if (games == null)
-                    response = "Nessun gioco trovato.";
-                else {
+                // ===== /random =====
+                if (parts.length == 1) {
+                    List<Game> games = rawgService.getRandomGame(limit);
                     for (Game g : games)
                         GameSender.sendGame(telegramClient, chatId, g);
-
                     return;
                 }
+
+                // ===== /random <numero> =====
+                if (parts.length == 2 && isNumber(parts[1])) {
+                    try {
+                        limit = Integer.parseInt(parts[1]);
+
+                        if(limit < 1)
+                            limit = 1;
+                        else if(limit > 20)
+                            limit = 20;
+                    }
+                    catch (Exception e) {}
+
+                    List<Game> games = rawgService.getRandomGame(limit);
+                    for (Game g : games)
+                        GameSender.sendGame(telegramClient, chatId, g);
+                    return;
+                }
+
+                // ===== /random genre <genere> =====
+                if (parts.length >= 3 && parts[1].equals("genre")) {
+                    String genre = parts[2];
+
+                    if (parts.length >= 4 && isNumber(parts[3])){
+                        try {
+                            limit = Integer.parseInt(parts[3]);
+
+                            if(limit < 1)
+                                limit = 1;
+                            else if(limit > 20)
+                                limit = 20;
+                        }
+                        catch (Exception e) {}
+                    }
+
+                    List<Game> games = rawgService.getRandomByGenre(genre, limit);
+
+                    if (games.isEmpty())
+                        response = "Nessun gioco trovato per il genere: " + genre;
+                    else {
+                        for (Game g : games)
+                            GameSender.sendGame(telegramClient, chatId, g);
+                        return;
+                    }
+                }
+
+                response = "Uso corretto:\n"
+                        + "/random <numero>\n"
+                        + "/random genre <genere> <numero>";
             } catch (Exception e) {
-                response = "Errore RAWG.";
+                response = "Errore RAWG";
             }
         }
 
@@ -188,5 +225,14 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
         try {
             telegramClient.execute(message);
         } catch (TelegramApiException e) {}
+    }
+
+    private boolean isNumber(String s) {
+        try {
+            Integer.parseInt(s);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

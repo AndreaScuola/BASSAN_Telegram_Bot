@@ -15,6 +15,7 @@ public class ApiClient {
             String url = RAWG_BASE_URL + endpoint + "?key=" + API_KEY;
 
             HttpRequest request = HttpRequest.newBuilder()
+                    .header("Content-Type", "application/json")
                     .uri(URI.create(url))
                     .GET()
                     .build();
@@ -32,6 +33,7 @@ public class ApiClient {
                     + "&" + queryParams;
 
             HttpRequest request = HttpRequest.newBuilder()
+                    .header("Content-Type", "application/json")
                     .uri(URI.create(url))
                     .GET()
                     .build();
