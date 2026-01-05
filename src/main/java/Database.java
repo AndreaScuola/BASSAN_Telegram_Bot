@@ -151,9 +151,7 @@ public class Database {
             return games;
         }
 
-        String query = "SELECT g.* " +
-                "FROM Library l INNER JOIN Games g ON l.game_id = g.id " +
-                "WHERE l.user_id = ?";
+        String query = "SELECT g.* FROM Library l INNER JOIN Games g ON l.game_id = g.id WHERE l.user_id = ? ORDER BY g.name";
 
         try{
             PreparedStatement stmt = connection.prepareStatement(query);
@@ -256,9 +254,7 @@ public class Database {
             return games;
         }
 
-        String query = "SELECT g.* " +
-                "FROM Wishlist w INNER JOIN Games g ON w.game_id = g.id " +
-                "WHERE w.user_id = ?";
+        String query = "SELECT g.* FROM Wishlist w INNER JOIN Games g ON w.game_id = g.id WHERE w.user_id = ? ORDER BY g.name";
 
         try{
             PreparedStatement stmt = connection.prepareStatement(query);
@@ -300,5 +296,26 @@ public class Database {
             System.err.println("Errore countWishlist: " + e.getMessage());
             return 0;
         }
+    }
+
+    public ArrayList<String> getWishlistGameNames(long telegramId) {
+        ArrayList<String> names = new ArrayList<>();
+        int userId = getUserId(telegramId);
+        if (userId == -1)
+            return names;
+
+        String query = "SELECT g.name FROM Wishlist w INNER JOIN Games g ON w.game_id = g.id WHERE w.user_id = ?";
+
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, userId);
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next())
+                names.add(rs.getString("name"));
+        } catch (SQLException e) {
+            System.err.println("Errore getWishlistGameNames: " + e.getMessage());
+        }
+
+        return names;
     }
 }

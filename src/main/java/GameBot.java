@@ -1,5 +1,7 @@
 import modelli.GameResponse;
 import modelli.Game;
+import modelli.Genre;
+import modelli.SteamDiscountInfo;
 import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient;
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
@@ -15,10 +17,13 @@ import java.util.List;
 public class GameBot implements LongPollingSingleThreadUpdateConsumer {
     private final TelegramClient telegramClient;
     private final RawgService rawgService;
+    SteamService steamService;
+
 
     public GameBot(String botToken) {
         telegramClient = new OkHttpTelegramClient(botToken);
         rawgService = new RawgService();
+        steamService = new SteamService();
     }
 
     @Override
@@ -72,21 +77,13 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                     System.err.println("Errore pulsanti: " + e.getMessage());
                 }
 
-                //Eseguo le operazioni
-                if (db.isInLibrary(telegramId, gameId)) {
-                    db.removeFromLibrary(telegramId, gameId);
-                    infoMessage = "Gioco rimosso dalla Libreria!";
-                } else {
-                    Game g = rawgService.selectGameById(gameId);
-                    if (g != null) {
-                        db.addToLibrary(telegramId, g);
-                        infoMessage = "✅ Gioco aggiunto alla Libreria!";
-                    } else {
-                        infoMessage = "❌ Gioco non trovato su RAWG.";
-                    }
-                }
-
                 Game g = rawgService.selectGameById(gameId);
+
+                //Eseguo le operazioni
+                if (db.isInLibrary(telegramId, gameId))
+                    db.removeFromLibrary(telegramId, gameId);
+                else if (g != null)
+                    db.addToLibrary(telegramId, g);
 
                 //Rimetto i pulsanti normali
                 editMarkup = EditMessageReplyMarkup.builder()
@@ -119,21 +116,13 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                     System.err.println("Errore pulsanti: " + e.getMessage());
                 }
 
-                //Eseguo le operazioni
-                if (db.isInWishlist(telegramId, gameId)) {
-                    db.removeFromWishlist(telegramId, gameId);
-                    infoMessage = "Gioco rimosso dalla Wishlist!";
-                } else {
-                    Game g = rawgService.selectGameById(gameId);
-                    if (g != null) {
-                        db.addToWishlist(telegramId, g);
-                        infoMessage = "❤️ Gioco aggiunto alla Wishlist!";
-                    } else {
-                        infoMessage = "❌ Gioco non trovato su RAWG.";
-                    }
-                }
-
                 Game g = rawgService.selectGameById(gameId);
+
+                //Eseguo le operazioni
+                if (db.isInWishlist(telegramId, gameId))
+                    db.removeFromWishlist(telegramId, gameId);
+                else if (g != null)
+                    db.addToWishlist(telegramId, g);
 
                 //Rimetto i pulsanti normali
                 editMarkup = EditMessageReplyMarkup.builder()
@@ -171,6 +160,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
         if (messageText.equals("/help")) {
             response = """
                     🎮 GameBot - Comandi disponibili
+                    
                     /help - Mostra questo messaggio
                     /game <nome> - Cerca un videogioco
                     /genres - Ritorna la lista di tutti i generi disponibili
@@ -183,6 +173,8 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                     /stats - Mostra il numero di giochi in libreria e wishlist
                     /library - Mostra la tua libreria
                     /wishlist - Mostra la tua wishlist
+                    /steam <nome> - Mostra il prezzo del gioco cercato
+                    /steamwishlist - Controlla i prezzi dei giochi in wishlist
                     """;
         }
         //#endregion
@@ -228,7 +220,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                 }
 
                 // ===== /random <numero> =====
-                if (parts.length == 2 && isNumber(parts[1])) {
+                else if (parts.length == 2 && isNumber(parts[1])) {
                     try {
                         limit = Integer.parseInt(parts[1]);
 
@@ -246,7 +238,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                 }
 
                 // ===== /random genre <genere> =====
-                if (parts.length >= 3 && parts[1].equals("genre")) {
+                else if (parts.length >= 3 && parts[1].equals("genre")) {
                     String genre = parts[2];
 
                     if (parts.length >= 4 && isNumber(parts[3])){
@@ -271,10 +263,8 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                         return;
                     }
                 }
-
-                response = "Uso corretto:\n"
-                        + "/random <numero>\n"
-                        + "/random genre <genere> <numero>";
+                else
+                    response = "Uso corretto:\n/random <numero>\n/random genre <genere> <numero>";
             } catch (Exception e) {
                 response = "Errore RAWG";
             }
@@ -303,10 +293,10 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                 }
 
                 try {
-                    var games = rawgService.recommendByGenres(generi, limit);
+                    List<Game> games = rawgService.recommendByGenres(generi, limit);
 
                     if (games.isEmpty())
-                        response = "Nessun gioco trovato.";
+                        response = "Nessun gioco trovato";
                     else {
                         for (Game g : games)
                             GameSender.sendGame(telegramClient, chatId, g, telegramId);
@@ -314,7 +304,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                         return;
                     }
                 } catch (Exception e) {
-                    response = "Errore RAWG.";
+                    response = "Errore RAWG";
                 }
             }
         }
@@ -323,17 +313,17 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
         //#region /genres
         else if (messageText.equals("/genres")) {
             try {
-                var genres = rawgService.getAllGenres();
+                List<Genre> genres = rawgService.getAllGenres();
 
                 if (genres.isEmpty())
                     response = "Nessun genere trovato.";
                 else {
                     response = "🎮 Generi disponibili:\n\n";
-                    for (var g : genres)
+                    for (Genre g : genres)
                         response += "- " + g.slug + "\n";
                 }
             } catch (Exception e) {
-                response = "Errore durante il recupero dei generi.";
+                response = "Errore durante il recupero dei generi";
             }
         }
         //#endregion
@@ -383,7 +373,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
             String stats;
 
             if (libraryCount == 0 && wishlistCount == 0)
-                stats = "\n\nNon hai ancora aggiunto giochi.\nUsa /game per iniziare!";
+                stats = "Non hai ancora aggiunto giochi.\nUsa /game per iniziare!";
             else {
                 stats = """
                         📊 *Le tue statistiche*
@@ -407,7 +397,64 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
 
             return;
         }
-        //#region
+        //#endregion
+
+        //#region /steamwishlist
+        else if (messageText.equals("/steamwishlist")) {
+            ArrayList<String> wishlistNames = db.getWishlistGameNames(telegramId);
+
+            if (wishlistNames.isEmpty()) {
+                GameSender.sendEmptyGameList(telegramClient, chatId);
+                return;
+            }
+
+            ArrayList<String> lines = new ArrayList<>();
+            lines.add("🎮 *Sconti wishlist:*");
+
+            for (String name : wishlistNames)
+                lines.add(steamService.getDiscountByName(name));
+
+            SendMessage msg = SendMessage.builder()
+                    .chatId(chatId)
+                    .text(String.join("\n\n", lines))
+                    .parseMode("Markdown")
+                    .build();
+
+            try {
+                telegramClient.execute(msg);
+            } catch (TelegramApiException e) {
+                System.err.println("Errore /steamwishlist: " + e.getMessage());
+            }
+
+            return;
+        }
+        //#endregion
+
+        //#region /steam
+        else if (messageText.startsWith("/steam")) {
+            String[] parts = messageText.split(" ", 2);
+
+            if (parts.length < 2 || parts[1].isBlank()) {
+                response = "Uso corretto:\n/steam <nome del gioco>";
+            } else {
+                String gameName = parts[1];
+                response = steamService.getDiscountByName(gameName);
+            }
+
+            SendMessage message = SendMessage.builder()
+                    .chatId(chatId)
+                    .text(response)
+                    .parseMode("Markdown")
+                    .build();
+
+            try {
+                telegramClient.execute(message);
+            } catch (Exception e) {
+                System.err.println("Errore /steam: " + e.getMessage());
+            }
+            return;
+        }
+        //#endregion
 
         //#region comandi non riconosciuti
         else {
@@ -422,9 +469,9 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
 
         try {
             telegramClient.execute(message);
-        } catch (TelegramApiException e) {}
-
-
+        } catch (TelegramApiException e) {
+            System.err.println("Errore sendMessage gestione messaggi testuali: " + e.getMessage());
+        }
         //#endregion
     }
 

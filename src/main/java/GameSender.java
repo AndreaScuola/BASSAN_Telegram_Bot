@@ -78,7 +78,6 @@ public class GameSender {
         );
     }
 
-
     public static InlineKeyboardMarkup buildKeyboard(Game game, long telegramId) {
         Database db = Database.getInstance();
         boolean inLibrary = db.isInLibrary(telegramId, game.id);
@@ -145,7 +144,7 @@ public class GameSender {
 
         SendAnimation gif = SendAnimation.builder()
                 .chatId(chatId)
-                .animation(new InputFile("https://media.giphy.com/media/3o7aD2saalBwwftBIY/giphy.gif"))
+                .animation(new InputFile("https://media.giphy.com/media/v1.Y2lkPWVjZjA1ZTQ3eGxuZWV0bDhiNndiZDlqYWN6d2s3cW15NnI4aTZ3NWxxbDlxend5OCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/Tfqq9a3G83tsvJoBTs/giphy.gif"))
                 .build();
 
         try {
@@ -155,5 +154,4 @@ public class GameSender {
             System.err.println("Errore sendEmptyGameList: " + e.getMessage());
         }
     }
-
 }
