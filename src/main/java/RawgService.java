@@ -99,7 +99,7 @@ public class RawgService extends ApiClient {
         GameResponse gameResponse = new Gson().fromJson(response.body(), GameResponse.class);
 
         if(gameResponse == null || gameResponse.results.isEmpty())
-            return null;
+            return new ArrayList<>();
         return gameResponse.results;
     }
 
@@ -108,7 +108,7 @@ public class RawgService extends ApiClient {
         var response = getHttpResponse(endpoint);
         GenreResponse genreResponse = new Gson().fromJson(response.body(), GenreResponse.class);
         if(genreResponse == null || genreResponse.results.isEmpty())
-            return null;
+            return new ArrayList<>();
         return genreResponse.results;
     }
 }

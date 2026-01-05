@@ -1,6 +1,7 @@
 import modelli.Game;
 import modelli.Genre;
 import modelli.PlatformWrapper;
+import org.telegram.telegrambots.meta.api.methods.send.SendAnimation;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
@@ -129,4 +130,30 @@ public class GameSender {
                 .keyboardRow(row)
                 .build();
     }
+
+    public static void sendEmptyGameList(TelegramClient telegramClient, long chatId) {
+        SendMessage msg = SendMessage.builder()
+                .chatId(chatId)
+                .text("""
+                📚 *La collezione è vuota!*
+
+                Non hai ancora aggiunto nessun gioco
+                Usa /game per cercarne uno e aggiungerlo!
+                """)
+                .parseMode("Markdown")
+                .build();
+
+        SendAnimation gif = SendAnimation.builder()
+                .chatId(chatId)
+                .animation(new InputFile("https://media.giphy.com/media/3o7aD2saalBwwftBIY/giphy.gif"))
+                .build();
+
+        try {
+            telegramClient.execute(msg);
+            telegramClient.execute(gif);
+        } catch (TelegramApiException e) {
+            System.err.println("Errore sendEmptyGameList: " + e.getMessage());
+        }
+    }
+
 }

@@ -166,7 +166,7 @@ public class Database {
                 g.name = rs.getString("name");
                 g.released = rs.getString("released");
                 g.rating = rs.getDouble("rating");
-                g.background_image = rs.getString("background_image");
+                g.background_image = rs.getString("image_url");
 
                 games.add(g);
             }
@@ -175,6 +175,26 @@ public class Database {
         }
 
         return games;
+    }
+
+    public int countLibrary(long telegramId) {
+        int userId = getUserId(telegramId);
+        if (userId == -1)
+            return 0;
+
+        String query = "SELECT COUNT(*) FROM Library WHERE user_id = ?";
+
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, userId);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next())
+                return rs.getInt(1);
+            return 0;
+        } catch (SQLException e) {
+            System.err.println("Errore countLibrary: " + e.getMessage());
+            return 0;
+        }
     }
 
     public void addToWishlist(long telegramId, Game game) {
@@ -251,7 +271,7 @@ public class Database {
                 g.name = rs.getString("name");
                 g.released = rs.getString("released");
                 g.rating = rs.getDouble("rating");
-                g.background_image = rs.getString("background_image");
+                g.background_image = rs.getString("image_url");
 
                 games.add(g);
             }
@@ -260,5 +280,25 @@ public class Database {
         }
 
         return games;
+    }
+
+    public int countWishlist(long telegramId) {
+        int userId = getUserId(telegramId);
+        if (userId == -1)
+            return 0;
+
+        String query = "SELECT COUNT(*) FROM Wishlist WHERE user_id = ?";
+
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, userId);
+            ResultSet rs = stmt.executeQuery();
+
+            if (rs.next())
+                return rs.getInt(1);
+            return 0;
+        } catch (SQLException e) {
+            System.err.println("Errore countWishlist: " + e.getMessage());
+            return 0;
+        }
     }
 }

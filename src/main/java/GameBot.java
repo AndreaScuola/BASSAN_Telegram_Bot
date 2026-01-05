@@ -10,6 +10,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
 import java.util.ArrayList;
+import java.util.List;
 
 public class GameBot implements LongPollingSingleThreadUpdateConsumer {
     private final TelegramClient telegramClient;
@@ -179,6 +180,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                     /random genre <genere> <numero> - Ritorna N videogiochi random del genere specificato
                     /recommend <genere> - Ritorna 5 videogiochi del genere specificato
                     /recommend <genere> <numero> - Ritorna N videogiochi del genere specificato
+                    /stats - Mostra il numero di giochi in libreria e wishlist
                     /library - Mostra la tua libreria
                     /wishlist - Mostra la tua wishlist
                     """;
@@ -198,14 +200,14 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                     GameResponse gameResponse = rawgService.selectGameByName(gameName);
 
                     if (gameResponse == null || gameResponse.results.isEmpty())
-                        response = "Nessun gioco trovato.";
+                        response = "Nessun gioco trovato";
                     else {
                         Game game = gameResponse.results.get(0);
                         GameSender.sendGame(telegramClient, chatId, game, telegramId);
                         return;
                     }
                 } catch (Exception e) {
-                    response = "Errore RAWG.";
+                    response = "Errore RAWG";
                 }
             }
         }
@@ -219,7 +221,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
             try {
                 // ===== /random =====
                 if (parts.length == 1) {
-                    ArrayList<Game> games = (ArrayList<Game>)rawgService.getRandomGame(limit);
+                    List<Game> games = rawgService.getRandomGame(limit);
                     for (Game g : games)
                         GameSender.sendGame(telegramClient, chatId, g, telegramId);
                     return;
@@ -237,7 +239,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                     }
                     catch (Exception e) {}
 
-                    ArrayList<Game> games = (ArrayList<Game>)rawgService.getRandomGame(limit);
+                    List<Game> games = rawgService.getRandomGame(limit);
                     for (Game g : games)
                         GameSender.sendGame(telegramClient, chatId, g, telegramId);
                     return;
@@ -259,7 +261,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                         catch (Exception e) {}
                     }
 
-                    ArrayList<Game> games = (ArrayList<Game>)rawgService.getRandomByGenre(genre, limit);
+                    List<Game> games = rawgService.getRandomByGenre(genre, limit);
 
                     if (games.isEmpty())
                         response = "Nessun gioco trovato per il genere: " + genre;
@@ -336,10 +338,82 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
         }
         //#endregion
 
+        //#region /library
+        else if (messageText.equals("/library")){
+            ArrayList<Game> library = db.readLibrary(telegramId);
+
+            if (library.isEmpty())
+                GameSender.sendEmptyGameList(telegramClient, chatId);
+            else {
+                try {
+                    for (Game g : library)
+                        GameSender.sendGame(telegramClient, chatId, g, telegramId);
+                } catch (Exception e) {
+                    System.err.println("Errore stampa libreria");
+                }
+            }
+
+            return;
+        }
+        //#endregion
+
+        //#region /wishlist
+        else if (messageText.equals("/wishlist")) {
+            ArrayList<Game> wishlist = db.readWishlist(telegramId);
+
+            if (wishlist.isEmpty())
+                GameSender.sendEmptyGameList(telegramClient, chatId);
+            else {
+                try {
+                    for (Game g : wishlist)
+                        GameSender.sendGame(telegramClient, chatId, g, telegramId);
+                } catch (Exception e) {
+                    System.err.println("Errore stampa wishlist");
+                }
+            }
+
+            return;
+        }
+        //#endregion
+
+        //#region /stats
+        else if (messageText.equals("/stats")) {
+            int libraryCount = db.countLibrary(telegramId);
+            int wishlistCount = db.countWishlist(telegramId);
+            String stats;
+
+            if (libraryCount == 0 && wishlistCount == 0)
+                stats = "\n\nNon hai ancora aggiunto giochi.\nUsa /game per iniziare!";
+            else {
+                stats = """
+                        📊 *Le tue statistiche*
+                        
+                        🎮 Giochi in libreria: %d
+                        ❤️ Giochi in wishlist: %d
+                        """.formatted(libraryCount, wishlistCount);
+            }
+
+            SendMessage message = SendMessage.builder()
+                    .chatId(chatId)
+                    .text(stats)
+                    .parseMode("Markdown")
+                    .build();
+
+            try {
+                telegramClient.execute(message);
+            } catch (TelegramApiException e) {
+                System.err.println("Errore /stats: " + e.getMessage());
+            }
+
+            return;
+        }
+        //#region
+
         //#region comandi non riconosciuti
         else {
             response = "Comando non riconosciuto. Usa /help";
         }
+        //#endregion
 
         SendMessage message = SendMessage.builder()
                 .chatId(chatId)
@@ -349,7 +423,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
         try {
             telegramClient.execute(message);
         } catch (TelegramApiException e) {}
-        //#endregion
+
 
         //#endregion
     }
