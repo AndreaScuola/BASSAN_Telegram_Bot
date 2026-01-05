@@ -163,6 +163,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                     
                     /help - Mostra questo messaggio
                     /game <nome> - Cerca un videogioco
+                    /gameseries <nome> - Cerca tutta la serie di un videogioco
                     /genres - Ritorna la lista di tutti i generi disponibili
                     /random - Ritorna un videogioco random
                     /random <numero> - Ritorna N videogiochi random
@@ -176,6 +177,37 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                     /steam <nome> - Mostra il prezzo del gioco cercato
                     /steamwishlist - Controlla i prezzi dei giochi in wishlist
                     """;
+        }
+        //#endregion
+
+        //#region /start
+
+        //#endregion
+
+        //#region /gameseries <nome>
+        else if(messageText.startsWith("/gameseries")){
+            String[] parts = messageText.split(" ", 2);
+
+            if (parts.length < 2 || parts[1].isBlank())
+                response = "Uso corretto:\n/gameseries <nome del gioco>";
+            else {
+                String gameName = parts[1];
+
+                try {
+                    List<Game> games = rawgService.selectGameSeriesByName(gameName);
+
+                    if (games.isEmpty()) {
+                        GameSender.sendEmptyGameList(telegramClient, chatId, "❌ Nessuna serie trovata per *" + gameName + "*");
+                        return;
+                    }
+
+                    for (Game g : games)
+                        GameSender.sendGame(telegramClient, chatId, g, telegramId);
+                    return;
+                } catch (Exception e) {
+                    response = "Errore RAWG";
+                }
+            }
         }
         //#endregion
 
@@ -205,6 +237,8 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
         }
         //#endregion
 
+
+
         //#region /random
         else if (messageText.startsWith("/random")) {
             String[] parts = messageText.split(" ");
@@ -232,9 +266,14 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                     catch (Exception e) {}
 
                     List<Game> games = rawgService.getRandomGame(limit);
-                    for (Game g : games)
-                        GameSender.sendGame(telegramClient, chatId, g, telegramId);
-                    return;
+
+                    if (games.isEmpty())
+                        response = "Nessun gioco trovato";
+                    else {
+                        for (Game g : games)
+                            GameSender.sendGame(telegramClient, chatId, g, telegramId);
+                        return;
+                    }
                 }
 
                 // ===== /random genre <genere> =====

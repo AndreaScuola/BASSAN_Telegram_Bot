@@ -47,6 +47,28 @@ public class RawgService extends ApiClient {
         return gson.fromJson(response.body(), GameResponse.class);
     }
 
+    public List<Game> selectGameSeriesByName(String name) {
+        GameResponse search = selectGameByName(name);
+
+        if (search == null || search.results == null || search.results.isEmpty())
+            return new ArrayList<>();
+
+        int gameId = search.results.get(0).id; //Prendo l'id del gioco per l'endpoint
+
+        String endpoint = "games/" + gameId + "/game-series";
+        var response = getHttpResponse(endpoint);
+
+        if (response.statusCode() != 200)
+            return new ArrayList<>();
+
+        GameResponse seriesResponse = new Gson().fromJson(response.body(), GameResponse.class);
+
+        if (seriesResponse == null || seriesResponse.results == null)
+            return new ArrayList<>();
+
+        return new ArrayList<>(seriesResponse.results);
+    }
+
     public List<Game> getRandomGame(int limit) {
         //pagina random da RAWG
         int randomPage = random.nextInt(500) + 1;

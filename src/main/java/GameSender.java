@@ -116,6 +116,43 @@ public class GameSender {
                 .build();
     }
 
+    public static void sendEmptyGameList(TelegramClient telegramClient, long chatId) {
+        SendMessage msg = SendMessage.builder()
+                .chatId(chatId)
+                .text("""
+                📚 *La collezione è vuota!*
+
+                Non hai ancora aggiunto nessun gioco
+                Usa /game per cercarne uno e aggiungerlo!
+                """)
+                .parseMode("Markdown")
+                .build();
+
+        sendEmptyGameListGif(telegramClient, chatId);
+
+        try {
+            telegramClient.execute(msg);
+        } catch (TelegramApiException e) {
+            System.err.println("Errore sendEmptyGameList: " + e.getMessage());
+        }
+    }
+
+    public static void sendEmptyGameList(TelegramClient telegramClient, long chatId, String message) {
+        SendMessage msg = SendMessage.builder()
+                .chatId(chatId)
+                .text(message)
+                .parseMode("Markdown")
+                .build();
+
+        sendEmptyGameListGif(telegramClient, chatId);
+
+        try {
+            telegramClient.execute(msg);
+        } catch (TelegramApiException e) {
+            System.err.println("Errore sendEmptyGameList: " + e.getMessage());
+        }
+    }
+
     public static InlineKeyboardMarkup buildLoadingKeyboard() {
         InlineKeyboardButton loadingBtn = InlineKeyboardButton.builder()
                 .text("⏳ Aggiornamento...")
@@ -130,28 +167,16 @@ public class GameSender {
                 .build();
     }
 
-    public static void sendEmptyGameList(TelegramClient telegramClient, long chatId) {
-        SendMessage msg = SendMessage.builder()
-                .chatId(chatId)
-                .text("""
-                📚 *La collezione è vuota!*
-
-                Non hai ancora aggiunto nessun gioco
-                Usa /game per cercarne uno e aggiungerlo!
-                """)
-                .parseMode("Markdown")
-                .build();
-
+    public static void sendEmptyGameListGif(TelegramClient telegramClient, long chatId){
         SendAnimation gif = SendAnimation.builder()
                 .chatId(chatId)
                 .animation(new InputFile("https://media.giphy.com/media/v1.Y2lkPWVjZjA1ZTQ3eGxuZWV0bDhiNndiZDlqYWN6d2s3cW15NnI4aTZ3NWxxbDlxend5OCZlcD12MV9naWZzX3NlYXJjaCZjdD1n/Tfqq9a3G83tsvJoBTs/giphy.gif"))
                 .build();
 
         try {
-            telegramClient.execute(msg);
             telegramClient.execute(gif);
         } catch (TelegramApiException e) {
-            System.err.println("Errore sendEmptyGameList: " + e.getMessage());
+            System.err.println("Errore sendEmptyGameListGif: " + e.getMessage());
         }
     }
 }
