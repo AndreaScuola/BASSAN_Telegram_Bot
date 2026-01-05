@@ -1,5 +1,6 @@
 import modelli.Game;
 import java.sql.*;
+import java.util.ArrayList;
 
 public class Database {
     private static Database instance;
@@ -36,7 +37,7 @@ public class Database {
     }
 
     public void insertUser(long telegramId) {
-        String query = "INSERT OR IGNORE INTO Users (telegram_id) VALUES (?)";
+        String query = "INSERT OR IGNORE INTO Users(telegram_id) VALUES (?)";
 
         try {
             PreparedStatement stmt = connection.prepareStatement(query);
@@ -103,6 +104,12 @@ public class Database {
 
     public void removeFromLibrary(long telegramId, int gameId) {
         int userId = getUserId(telegramId);
+
+        if (userId == -1) {
+            System.err.println("Errore removeFromLibrary: userId = -1");
+            return;
+        }
+
         String query = "DELETE FROM Library WHERE user_id = ? AND game_id = ?";
         try {
             PreparedStatement stmt = connection.prepareStatement(query);
@@ -116,8 +123,10 @@ public class Database {
 
     public boolean isInLibrary(long telegramId, int gameId) {
         int userId = getUserId(telegramId);
-        if(userId == -1)
+        if (userId == -1) {
+            System.err.println("Errore isInLibrary: userId = -1");
             return false;
+        }
 
         String query = "SELECT user_id FROM Library WHERE user_id = ? AND game_id = ?";
         try{
@@ -133,11 +142,46 @@ public class Database {
         }
     }
 
+    public ArrayList<Game> readLibrary(long telegramId){
+        ArrayList<Game> games = new ArrayList<Game>();
+        int userId = getUserId(telegramId);
+
+        if (userId == -1) {
+            System.err.println("readLibrary: userId = -1");
+            return games;
+        }
+
+        String query = "SELECT g.* " +
+                "FROM Library l INNER JOIN Games g ON l.game_id = g.id " +
+                "WHERE l.user_id = ?";
+
+        try{
+            PreparedStatement stmt = connection.prepareStatement(query);
+            stmt.setInt(1, userId);
+
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                Game g = new Game();
+                g.id = rs.getInt("id");
+                g.name = rs.getString("name");
+                g.released = rs.getString("released");
+                g.rating = rs.getDouble("rating");
+                g.background_image = rs.getString("background_image");
+
+                games.add(g);
+            }
+        } catch (SQLException e) {
+            System.err.println("Errore readLibrary: " + e.getMessage());
+        }
+
+        return games;
+    }
+
     public void addToWishlist(long telegramId, Game game) {
         insertGame(game);
         int userId = getUserId(telegramId);
 
-        String query = "INSERT OR IGNORE INTO Wishlist (user_id, game_id) VALUES (?, ?)";
+        String query = "INSERT OR IGNORE INTO Wishlist(user_id, game_id) VALUES (?, ?)";
 
         try {
             PreparedStatement stmt = connection.prepareStatement(query);
@@ -181,5 +225,40 @@ public class Database {
             System.err.println("Errore isInWishlist: " + e.getMessage());
             return false;
         }
+    }
+
+    public ArrayList<Game> readWishlist(long telegramId){
+        ArrayList<Game> games = new ArrayList<Game>();
+        int userId = getUserId(telegramId);
+
+        if (userId == -1) {
+            System.err.println("readWishlist: userId = -1");
+            return games;
+        }
+
+        String query = "SELECT g.* " +
+                "FROM Wishlist w INNER JOIN Games g ON w.game_id = g.id " +
+                "WHERE w.user_id = ?";
+
+        try{
+            PreparedStatement stmt = connection.prepareStatement(query);
+            stmt.setInt(1, userId);
+
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                Game g = new Game();
+                g.id = rs.getInt("id");
+                g.name = rs.getString("name");
+                g.released = rs.getString("released");
+                g.rating = rs.getDouble("rating");
+                g.background_image = rs.getString("background_image");
+
+                games.add(g);
+            }
+        } catch (SQLException e) {
+            System.err.println("Errore readWishlist: " + e.getMessage());
+        }
+
+        return games;
     }
 }

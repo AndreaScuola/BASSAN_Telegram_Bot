@@ -37,7 +37,6 @@ public class GameSender {
         }
     }
 
-    // ===== TESTO =====
     private static String buildText(Game game) {
         String piattaforme = "";
         if (game.platforms != null) {
@@ -78,7 +77,7 @@ public class GameSender {
         );
     }
 
-    // ===== BOTTONI =====
+
     public static InlineKeyboardMarkup buildKeyboard(Game game, long telegramId) {
         Database db = Database.getInstance();
         boolean inLibrary = db.isInLibrary(telegramId, game.id);

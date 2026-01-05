@@ -3,7 +3,6 @@ import modelli.Game;
 import modelli.GameResponse;
 import modelli.Genre;
 import modelli.GenreResponse;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

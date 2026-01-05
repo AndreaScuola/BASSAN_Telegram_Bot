@@ -9,7 +9,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
-import java.util.List;
+import java.util.ArrayList;
 
 public class GameBot implements LongPollingSingleThreadUpdateConsumer {
     private final TelegramClient telegramClient;
@@ -26,7 +26,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
         long telegramId;
         Database db = Database.getInstance();
 
-        // ===== CALLBACK DEI BOTTONI =====
+        //#region GESTIONE CALLBACK DEI BUTTON
         if (update.hasCallbackQuery()) {
             chatId = update.getCallbackQuery().getMessage().getChatId();
             telegramId = update.getCallbackQuery().getFrom().getId();
@@ -35,16 +35,16 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
             db.insertUser(telegramId);
 
             String data = update.getCallbackQuery().getData();
-
             String infoMessage = "";
 
+            //#region gestione button disabled
             if (data.equals("DISABLED")) {
-                //Risposta temporanea al click del bottone
                 AnswerCallbackQuery answer = AnswerCallbackQuery.builder()
                         .callbackQueryId(update.getCallbackQuery().getId())
                         .text("⏳ Attendi...")
                         .showAlert(false)  //true per alert popup, false per notifica in basso
                         .build();
+
                 try {
                     telegramClient.execute(answer);
                 } catch (TelegramApiException e) {
@@ -52,7 +52,9 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                 }
 
                 return;
-            } else if (data.startsWith("LIB_")) {
+            } //#endregion
+            //#region gestione button libreria
+            else if (data.startsWith("LIB_")) {
                 int gameId = Integer.parseInt(data.split("_")[1]);
                 long messageId = update.getCallbackQuery().getMessage().getMessageId();
 
@@ -97,7 +99,9 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                 } catch (TelegramApiException e) {
                     System.err.println("Errore pulsanti: " + e.getMessage());
                 }
-            } else if (data.startsWith("WISH_")) {
+            } //#endregion
+            //#region gestione button wishlist
+            else if (data.startsWith("WISH_")) {  //Gestione aggiunta/rimozione wishlist
                 int gameId = Integer.parseInt(data.split("_")[1]);
                 long messageId = update.getCallbackQuery().getMessage().getMessageId();
 
@@ -143,46 +147,13 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                     System.err.println("Errore pulsanti: " + e.getMessage());
                 }
             }
-            /*
-            // ===== AGGIORNA I BOTTONI =====
-            try {
-                int messageId = update.getCallbackQuery().getMessage().getMessageId();
-
-                // Recuperi di nuovo il gioco (serve per ricreare i pulsanti)
-                int gameId = Integer.parseInt(data.split("_")[1]);
-                Game game = rawgService.selectGameById(gameId);
-
-                if (game != null) {
-                    InlineKeyboardMarkup newKeyboard = GameSender.buildKeyboard(game, telegramId);
-
-                    EditMessageReplyMarkup editMarkup = EditMessageReplyMarkup.builder()
-                            .chatId(chatId)
-                            .messageId(messageId)
-                            .replyMarkup(newKeyboard)
-                            .build();
-
-                    telegramClient.execute(editMarkup);
-                }
-            } catch (TelegramApiException e) {
-                System.err.println("Errore aggiornamento pulsanti: " + e.getMessage());
-            }
-
-            //Risposta temporanea al click del bottone
-            AnswerCallbackQuery answer = AnswerCallbackQuery.builder()
-                    .callbackQueryId(update.getCallbackQuery().getId())
-                    .text(infoMessage)
-                    .showAlert(false)  //true per alert popup, false per notifica in basso
-                    .build();
-            try {
-                telegramClient.execute(answer);
-            } catch (TelegramApiException e) {
-                System.err.println("Errore pulsanti: " + e.getMessage());
-            }*/
+            //#endregion
 
             return;
         }
+        //#endregion
 
-        // ===== MESSAGGI DI TESTO =====
+        //#region GESTIONE MESSAGGI DI TESTO
         if (!update.hasMessage() || !update.getMessage().hasText())
             return;
 
@@ -192,11 +163,10 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
         //Inserisce l'utente nella tabella -> Se c'è già non lo inserisce
         db.insertUser(telegramId);
 
-
         String messageText = update.getMessage().getText().trim().toLowerCase();
         String response;
 
-        // ===== /help =====
+        //#region /help
         if (messageText.equals("/help")) {
             response = """
                     🎮 GameBot - Comandi disponibili
@@ -210,10 +180,12 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                     /recommend <genere> - Ritorna 5 videogiochi del genere specificato
                     /recommend <genere> <numero> - Ritorna N videogiochi del genere specificato
                     /library - Mostra la tua libreria
+                    /wishlist - Mostra la tua wishlist
                     """;
         }
+        //#endregion
 
-        // ===== /game <nome> =====
+        //#region /game <nome>
         else if (messageText.startsWith("/game")) {
             String[] parts = messageText.split(" ", 2);
 
@@ -237,8 +209,9 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                 }
             }
         }
+        //#endregion
 
-        // ===== RANDOM =====
+        //#region /random
         else if (messageText.startsWith("/random")) {
             String[] parts = messageText.split(" ");
             int limit = 1;
@@ -246,7 +219,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
             try {
                 // ===== /random =====
                 if (parts.length == 1) {
-                    List<Game> games = rawgService.getRandomGame(limit);
+                    ArrayList<Game> games = (ArrayList<Game>)rawgService.getRandomGame(limit);
                     for (Game g : games)
                         GameSender.sendGame(telegramClient, chatId, g, telegramId);
                     return;
@@ -264,7 +237,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                     }
                     catch (Exception e) {}
 
-                    List<Game> games = rawgService.getRandomGame(limit);
+                    ArrayList<Game> games = (ArrayList<Game>)rawgService.getRandomGame(limit);
                     for (Game g : games)
                         GameSender.sendGame(telegramClient, chatId, g, telegramId);
                     return;
@@ -286,7 +259,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                         catch (Exception e) {}
                     }
 
-                    List<Game> games = rawgService.getRandomByGenre(genre, limit);
+                    ArrayList<Game> games = (ArrayList<Game>)rawgService.getRandomByGenre(genre, limit);
 
                     if (games.isEmpty())
                         response = "Nessun gioco trovato per il genere: " + genre;
@@ -304,8 +277,9 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                 response = "Errore RAWG";
             }
         }
+        //#endregion
 
-        // ===== RECOMMEND =====
+        //#region /recommend
         else if (messageText.startsWith("/recommend")) {
             String[] parts = messageText.split(" ");
             if (parts.length < 2)
@@ -342,8 +316,9 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                 }
             }
         }
+        //#endregion
 
-        // ===== GENRES =====
+        //#region /genres
         else if (messageText.equals("/genres")) {
             try {
                 var genres = rawgService.getAllGenres();
@@ -359,8 +334,9 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                 response = "Errore durante il recupero dei generi.";
             }
         }
+        //#endregion
 
-        // ===== COMANDO NON RICONOSCIUTO =====
+        //#region comandi non riconosciuti
         else {
             response = "Comando non riconosciuto. Usa /help";
         }
@@ -373,6 +349,9 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
         try {
             telegramClient.execute(message);
         } catch (TelegramApiException e) {}
+        //#endregion
+
+        //#endregion
     }
 
     private boolean isNumber(String s) {
