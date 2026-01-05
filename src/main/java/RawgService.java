@@ -133,4 +133,25 @@ public class RawgService extends ApiClient {
             return new ArrayList<>();
         return genreResponse.results;
     }
+
+    public List<Game> selectGameDLCsByName(String name) {
+        GameResponse search = selectGameByName(name);
+
+        if (search == null || search.results == null || search.results.isEmpty())
+            return new ArrayList<>();
+
+        int gameId = search.results.get(0).id; //Prendo l'id del gioco per l'endpoint
+        String endpoint = "games/" + gameId + "/additions"; //Endpoint DLC
+        var response = getHttpResponse(endpoint);
+
+        if (response.statusCode() != 200)
+            return new ArrayList<>();
+
+        GameResponse dlcResponse = new Gson().fromJson(response.body(), GameResponse.class);
+
+        if (dlcResponse == null || dlcResponse.results == null)
+            return new ArrayList<>();
+
+        return new ArrayList<>(dlcResponse.results);
+    }
 }

@@ -156,14 +156,66 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
         String messageText = update.getMessage().getText().trim().toLowerCase();
         String response;
 
+        //#region /start
+        if (messageText.equals("/start")) {
+            response = """
+            👋 *Benvenuto su GameBot!*
+            
+            🎮 Il tuo assistente personale per il mondo dei videogiochi.
+            Con GameBot puoi scoprire nuovi giochi, gestire la tua libreria,
+            controllare sconti su Steam e molto altro.
+            
+            ✨ *Cosa puoi fare:*
+            🔍 Cercare videogiochi
+            📚 Gestire la tua libreria personale
+            ❤️ Salvare giochi nella wishlist
+            🎲 Scoprire giochi casuali
+            🧩 Trovare DLC e giochi della stessa serie
+            💸 Controllare prezzi e sconti su Steam
+            
+            📌 *Comandi principali:*
+            /game <nome> — Cerca un videogioco
+            /random — Gioco casuale
+            /library — La tua libreria
+            /wishlist — La tua wishlist
+            /steam <nome> — Prezzi e sconti Steam
+            /steamwishlist — Sconti sui giochi in wishlist
+            /gameseries <nome> — Giochi della stessa serie
+            /gamedlc <nome> — DLC ed espansioni
+            /genres — Tutti i generi disponibili
+            /help — Lista completa dei comandi
+            
+            🚀 Inizia subito cercando un gioco:
+            👉 `/game Portal`
+            
+            Buon divertimento! 🎮🔥
+            """;
+
+            SendMessage message = SendMessage.builder()
+                    .chatId(chatId)
+                    .text(response)
+                    .parseMode("Markdown")
+                    .build();
+
+            try {
+                telegramClient.execute(message);
+            } catch (Exception e) {
+                System.err.println("Errore /start: " + e.getMessage());
+            }
+
+            return;
+        }
+        //#endregion
+
         //#region /help
-        if (messageText.equals("/help")) {
+        else if (messageText.equals("/help")) {
             response = """
                     🎮 GameBot - Comandi disponibili
                     
                     /help - Mostra questo messaggio
                     /game <nome> - Cerca un videogioco
                     /gameseries <nome> - Cerca tutta la serie di un videogioco
+                    /gamedlc <nome> - Cerca tutte le addition del gioco
                     /genres - Ritorna la lista di tutti i generi disponibili
                     /random - Ritorna un videogioco random
                     /random <numero> - Ritorna N videogiochi random
@@ -178,10 +230,6 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                     /steamwishlist - Controlla i prezzi dei giochi in wishlist
                     """;
         }
-        //#endregion
-
-        //#region /start
-
         //#endregion
 
         //#region /gameseries <nome>
@@ -203,6 +251,34 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
 
                     for (Game g : games)
                         GameSender.sendGame(telegramClient, chatId, g, telegramId);
+                    return;
+                } catch (Exception e) {
+                    response = "Errore RAWG";
+                }
+            }
+        }
+        //#endregion
+
+        //#region /gamedlc <nome>
+        else if (messageText.startsWith("/gamedlc")) {
+            String[] parts = messageText.split(" ", 2);
+
+            if (parts.length < 2 || parts[1].isBlank())
+                response = "Uso corretto:\n/gamedlc <nome del gioco>";
+            else {
+                String gameName = parts[1];
+
+                try {
+                    List<Game> dlcs = rawgService.selectGameDLCsByName(gameName);
+
+                    if (dlcs.isEmpty()) {
+                        GameSender.sendEmptyGameList(telegramClient, chatId, "❌ Nessun DLC trovato per *" + gameName + "*");
+                        return;
+                    }
+
+                    for (Game g : dlcs)
+                        GameSender.sendGame(telegramClient, chatId, g, telegramId);
+
                     return;
                 } catch (Exception e) {
                     response = "Errore RAWG";
@@ -236,8 +312,6 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
             }
         }
         //#endregion
-
-
 
         //#region /random
         else if (messageText.startsWith("/random")) {
