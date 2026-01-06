@@ -50,7 +50,7 @@ public class SteamService {
 
             HttpResponse<String> res = client.send(req, HttpResponse.BodyHandlers.ofString());
 
-            Type type = new TypeToken<Map<String, SteamAppWrapper>>() {}.getType();
+            Type type = new TypeToken<Map<String, SteamAppWrapper>>() {}.getType(); //Serve per specificare in cosa deserializzare
             Map<String, SteamAppWrapper> map = gson.fromJson(res.body(), type);
 
             SteamAppWrapper wrapper = map.get(String.valueOf(appid));
