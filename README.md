@@ -164,11 +164,14 @@ Ogni utente Telegram può salvare più giochi nella propria libreria e wishlist.
 
 ## 💬 Esempi di conversazione
 
-
+<img src="EsempiConversazione/1IMG_start.jpg" width="40%"/>
+<img src="EsempiConversazione/2IMG_game.jpg" width="40%"/>
+<img src="EsempiConversazione/3IMG_gameseries.jpg" width="40%"/>
+<img src="EsempiConversazione/4IMG_gamedlc.jpg" width="40%"/>
+<img src="EsempiConversazione/5IMG_randomgenre.jpg" width="40%"/>
+<img src="EsempiConversazione/6IMG_steam.jpg" width="40%"/>
 
 ---
-
-
 
 ## ⚙️ Setup del progetto
 
