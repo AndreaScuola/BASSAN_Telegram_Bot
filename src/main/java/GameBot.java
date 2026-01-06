@@ -41,7 +41,6 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
             db.insertUser(telegramId);
 
             String data = update.getCallbackQuery().getData();
-            String infoMessage = "";
 
             //#region gestione button disabled
             if (data.equals("DISABLED")) {
@@ -144,21 +143,20 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
         //#endregion
 
         //#region GESTIONE MESSAGGI DI TESTO
-        if (!update.hasMessage() || !update.getMessage().hasText())
-            return;
+        if (update.hasMessage() && update.getMessage().hasText()){
 
-        chatId = update.getMessage().getChatId();
-        telegramId = update.getMessage().getFrom().getId();
+            chatId = update.getMessage().getChatId();
+            telegramId = update.getMessage().getFrom().getId();
 
-        //Inserisce l'utente nella tabella -> Se c'è già non lo inserisce
-        db.insertUser(telegramId);
+            //Inserisce l'utente nella tabella -> Se c'è già non lo inserisce
+            db.insertUser(telegramId);
 
-        String messageText = update.getMessage().getText().trim().toLowerCase();
-        String response;
+            String messageText = update.getMessage().getText().trim().toLowerCase();
+            String response;
 
-        //#region /start
-        if (messageText.equals("/start")) {
-            response = """
+            //#region /start
+            if (messageText.equals("/start")) {
+                response = """
             👋 *Benvenuto su GameBot!*
             
             🎮 Il tuo assistente personale per il mondo dei videogiochi.
@@ -191,25 +189,25 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
             Buon divertimento! 🎮🔥
             """;
 
-            SendMessage message = SendMessage.builder()
-                    .chatId(chatId)
-                    .text(response)
-                    .parseMode("Markdown")
-                    .build();
+                SendMessage message = SendMessage.builder()
+                        .chatId(chatId)
+                        .text(response)
+                        .parseMode("Markdown")
+                        .build();
 
-            try {
-                telegramClient.execute(message);
-            } catch (Exception e) {
-                System.err.println("Errore /start: " + e.getMessage());
+                try {
+                    telegramClient.execute(message);
+                } catch (Exception e) {
+                    System.err.println("Errore /start: " + e.getMessage());
+                }
+
+                return;
             }
+            //#endregion
 
-            return;
-        }
-        //#endregion
-
-        //#region /help
-        else if (messageText.equals("/help")) {
-            response = """
+            //#region /help
+            else if (messageText.equals("/help")) {
+                response = """
                     🎮 GameBot - Comandi disponibili
                     
                     /help - Mostra questo messaggio
@@ -229,134 +227,108 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                     /steam <nome> - Mostra il prezzo del gioco cercato
                     /steamwishlist - Controlla i prezzi dei giochi in wishlist
                     """;
-        }
-        //#endregion
-
-        //#region /gameseries <nome>
-        else if(messageText.startsWith("/gameseries")){
-            String[] parts = messageText.split(" ", 2);
-
-            if (parts.length < 2 || parts[1].isBlank())
-                response = "Uso corretto:\n/gameseries <nome del gioco>";
-            else {
-                String gameName = parts[1];
-
-                try {
-                    List<Game> games = rawgService.selectGameSeriesByName(gameName);
-
-                    if (games.isEmpty()) {
-                        GameSender.sendEmptyGameList(telegramClient, chatId, "❌ Nessuna serie trovata per *" + gameName + "*");
-                        return;
-                    }
-
-                    for (Game g : games)
-                        GameSender.sendGame(telegramClient, chatId, g, telegramId);
-                    return;
-                } catch (Exception e) {
-                    response = "Errore RAWG";
-                }
             }
-        }
-        //#endregion
+            //#endregion
 
-        //#region /gamedlc <nome>
-        else if (messageText.startsWith("/gamedlc")) {
-            String[] parts = messageText.split(" ", 2);
+            //#region /gameseries <nome>
+            else if(messageText.startsWith("/gameseries")){
+                String[] parts = messageText.split(" ", 2);
 
-            if (parts.length < 2 || parts[1].isBlank())
-                response = "Uso corretto:\n/gamedlc <nome del gioco>";
-            else {
-                String gameName = parts[1];
+                if (parts.length < 2 || parts[1].isBlank())
+                    response = "Uso corretto:\n/gameseries <nome del gioco>";
+                else {
+                    String gameName = parts[1];
 
-                try {
-                    List<Game> dlcs = rawgService.selectGameDLCsByName(gameName);
-
-                    if (dlcs.isEmpty()) {
-                        GameSender.sendEmptyGameList(telegramClient, chatId, "❌ Nessun DLC trovato per *" + gameName + "*");
-                        return;
-                    }
-
-                    for (Game g : dlcs)
-                        GameSender.sendGame(telegramClient, chatId, g, telegramId);
-
-                    return;
-                } catch (Exception e) {
-                    response = "Errore RAWG";
-                }
-            }
-        }
-        //#endregion
-
-        //#region /game <nome>
-        else if (messageText.startsWith("/game")) {
-            String[] parts = messageText.split(" ", 2);
-
-            if (parts.length < 2 || parts[1].isBlank())
-                response = "Uso corretto:\n/game <nome del gioco>";
-            else {
-                String gameName = parts[1];
-
-                try {
-                    GameResponse gameResponse = rawgService.selectGameByName(gameName);
-
-                    if (gameResponse == null || gameResponse.results.isEmpty())
-                        response = "Nessun gioco trovato";
-                    else {
-                        Game game = gameResponse.results.get(0);
-                        GameSender.sendGame(telegramClient, chatId, game, telegramId);
-                        return;
-                    }
-                } catch (Exception e) {
-                    response = "Errore RAWG";
-                }
-            }
-        }
-        //#endregion
-
-        //#region /random
-        else if (messageText.startsWith("/random")) {
-            String[] parts = messageText.split(" ");
-            int limit = 1;
-
-            try {
-                // ===== /random =====
-                if (parts.length == 1) {
-                    List<Game> games = rawgService.getRandomGame(limit);
-                    for (Game g : games)
-                        GameSender.sendGame(telegramClient, chatId, g, telegramId);
-                    return;
-                }
-
-                // ===== /random <numero> =====
-                else if (parts.length == 2 && isNumber(parts[1])) {
                     try {
-                        limit = Integer.parseInt(parts[1]);
+                        List<Game> games = rawgService.selectGameSeriesByName(gameName);
 
-                        if(limit < 1)
-                            limit = 1;
-                        else if(limit > 20)
-                            limit = 20;
+                        if (games.isEmpty()) {
+                            GameSender.sendEmptyGameList(telegramClient, chatId, "❌ Nessuna serie trovata per *" + gameName + "*");
+                            return;
+                        }
+
+                        for (Game g : games)
+                            GameSender.sendGame(telegramClient, chatId, g, telegramId);
+                        return;
+                    } catch (Exception e) {
+                        response = "Errore RAWG";
                     }
-                    catch (Exception e) {}
+                }
+            }
+            //#endregion
 
-                    List<Game> games = rawgService.getRandomGame(limit);
+            //#region /gamedlc <nome>
+            else if (messageText.startsWith("/gamedlc")) {
+                String[] parts = messageText.split(" ", 2);
 
-                    if (games.isEmpty())
-                        response = "Nessun gioco trovato";
-                    else {
+                if (parts.length < 2 || parts[1].isBlank())
+                    response = "Uso corretto:\n/gamedlc <nome del gioco>";
+                else {
+                    String gameName = parts[1];
+
+                    try {
+                        List<Game> dlcs = rawgService.selectGameDLCsByName(gameName);
+
+                        if (dlcs.isEmpty()) {
+                            GameSender.sendEmptyGameList(telegramClient, chatId, "❌ Nessun DLC trovato per *" + gameName + "*");
+                            return;
+                        }
+
+                        for (Game g : dlcs)
+                            GameSender.sendGame(telegramClient, chatId, g, telegramId);
+
+                        return;
+                    } catch (Exception e) {
+                        response = "Errore RAWG";
+                    }
+                }
+            }
+            //#endregion
+
+            //#region /game <nome>
+            else if (messageText.startsWith("/game")) {
+                String[] parts = messageText.split(" ", 2);
+
+                if (parts.length < 2 || parts[1].isBlank())
+                    response = "Uso corretto:\n/game <nome del gioco>";
+                else {
+                    String gameName = parts[1];
+
+                    try {
+                        GameResponse gameResponse = rawgService.selectGameByName(gameName);
+
+                        if (gameResponse == null || gameResponse.results.isEmpty())
+                            response = "Nessun gioco trovato";
+                        else {
+                            Game game = gameResponse.results.get(0);
+                            GameSender.sendGame(telegramClient, chatId, game, telegramId);
+                            return;
+                        }
+                    } catch (Exception e) {
+                        response = "Errore RAWG";
+                    }
+                }
+            }
+            //#endregion
+
+            //#region /random
+            else if (messageText.startsWith("/random")) {
+                String[] parts = messageText.split(" ");
+                int limit = 1;
+
+                try {
+                    // ===== /random =====
+                    if (parts.length == 1) {
+                        List<Game> games = rawgService.getRandomGame(limit);
                         for (Game g : games)
                             GameSender.sendGame(telegramClient, chatId, g, telegramId);
                         return;
                     }
-                }
 
-                // ===== /random genre <genere> =====
-                else if (parts.length >= 3 && parts[1].equals("genre")) {
-                    String genre = parts[2];
-
-                    if (parts.length >= 4 && isNumber(parts[3])){
+                    // ===== /random <numero> =====
+                    else if (parts.length == 2 && isNumber(parts[1])) {
                         try {
-                            limit = Integer.parseInt(parts[3]);
+                            limit = Integer.parseInt(parts[1]);
 
                             if(limit < 1)
                                 limit = 1;
@@ -364,226 +336,254 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                                 limit = 20;
                         }
                         catch (Exception e) {}
+
+                        List<Game> games = rawgService.getRandomGame(limit);
+
+                        if (games.isEmpty())
+                            response = "Nessun gioco trovato";
+                        else {
+                            for (Game g : games)
+                                GameSender.sendGame(telegramClient, chatId, g, telegramId);
+                            return;
+                        }
                     }
 
-                    List<Game> games = rawgService.getRandomByGenre(genre, limit);
+                    // ===== /random genre <genere> =====
+                    else if (parts.length >= 3 && parts[1].equals("genre")) {
+                        String genre = parts[2];
 
-                    if (games.isEmpty())
-                        response = "Nessun gioco trovato per il genere: " + genre;
-                    else {
-                        for (Game g : games)
-                            GameSender.sendGame(telegramClient, chatId, g, telegramId);
-                        return;
+                        if (parts.length >= 4 && isNumber(parts[3])){
+                            try {
+                                limit = Integer.parseInt(parts[3]);
+
+                                if(limit < 1)
+                                    limit = 1;
+                                else if(limit > 20)
+                                    limit = 20;
+                            }
+                            catch (Exception e) {}
+                        }
+
+                        List<Game> games = rawgService.getRandomByGenre(genre, limit);
+
+                        if (games.isEmpty())
+                            response = "Nessun gioco trovato per il genere: " + genre;
+                        else {
+                            for (Game g : games)
+                                GameSender.sendGame(telegramClient, chatId, g, telegramId);
+                            return;
+                        }
                     }
-                }
-                else
-                    response = "Uso corretto:\n/random <numero>\n/random genre <genere> <numero>";
-            } catch (Exception e) {
-                response = "Errore RAWG";
-            }
-        }
-        //#endregion
-
-        //#region /recommend
-        else if (messageText.startsWith("/recommend")) {
-            String[] parts = messageText.split(" ");
-            if (parts.length < 2)
-                response = "Uso corretto:\n/recommend <genere> <numero>";
-            else {
-                String generi = parts[1];
-                int limit = 5;
-
-                if (parts.length >= 3) {
-                    try {
-                        limit = Integer.parseInt(parts[2]);
-
-                        if(limit < 1)
-                            limit = 5;
-                        else if(limit > 20)
-                            limit = 20;
-                    }
-                    catch (Exception e) {}
-                }
-
-                try {
-                    List<Game> games = rawgService.recommendByGenres(generi, limit);
-
-                    if (games.isEmpty())
-                        response = "Nessun gioco trovato";
-                    else {
-                        for (Game g : games)
-                            GameSender.sendGame(telegramClient, chatId, g, telegramId);
-
-                        return;
-                    }
+                    else
+                        response = "Uso corretto:\n/random <numero>\n/random genre <genere> <numero>";
                 } catch (Exception e) {
                     response = "Errore RAWG";
                 }
             }
-        }
-        //#endregion
+            //#endregion
 
-        //#region /genres
-        else if (messageText.equals("/genres")) {
-            try {
-                List<Genre> genres = rawgService.getAllGenres();
-
-                if (genres.isEmpty())
-                    response = "Nessun genere trovato.";
+            //#region /recommend
+            else if (messageText.startsWith("/recommend")) {
+                String[] parts = messageText.split(" ");
+                if (parts.length < 2)
+                    response = "Uso corretto:\n/recommend <genere> <numero>";
                 else {
-                    response = "🎮 Generi disponibili:\n\n";
-                    for (Genre g : genres)
-                        response += "- " + g.slug + "\n";
+                    String generi = parts[1];
+                    int limit = 5;
+
+                    if (parts.length >= 3) {
+                        try {
+                            limit = Integer.parseInt(parts[2]);
+
+                            if(limit < 1)
+                                limit = 5;
+                            else if(limit > 20)
+                                limit = 20;
+                        }
+                        catch (Exception e) {}
+                    }
+
+                    try {
+                        List<Game> games = rawgService.recommendByGenres(generi, limit);
+
+                        if (games.isEmpty())
+                            response = "Nessun gioco trovato";
+                        else {
+                            for (Game g : games)
+                                GameSender.sendGame(telegramClient, chatId, g, telegramId);
+
+                            return;
+                        }
+                    } catch (Exception e) {
+                        response = "Errore RAWG";
+                    }
                 }
-            } catch (Exception e) {
-                response = "Errore durante il recupero dei generi";
             }
-        }
-        //#endregion
+            //#endregion
 
-        //#region /library
-        else if (messageText.equals("/library")){
-            ArrayList<Game> library = db.readLibrary(telegramId);
-
-            if (library.isEmpty())
-                GameSender.sendEmptyGameList(telegramClient, chatId);
-            else {
+            //#region /genres
+            else if (messageText.equals("/genres")) {
                 try {
-                    for (Game g : library)
-                        GameSender.sendGame(telegramClient, chatId, g, telegramId);
+                    List<Genre> genres = rawgService.getAllGenres();
+
+                    if (genres.isEmpty())
+                        response = "Nessun genere trovato.";
+                    else {
+                        response = "🎮 Generi disponibili:\n\n";
+                        for (Genre g : genres)
+                            response += "- " + g.slug + "\n";
+                    }
                 } catch (Exception e) {
-                    System.err.println("Errore stampa libreria");
+                    response = "Errore durante il recupero dei generi";
                 }
             }
+            //#endregion
 
-            return;
-        }
-        //#endregion
+            //#region /library
+            else if (messageText.equals("/library")){
+                ArrayList<Game> library = db.readLibrary(telegramId);
 
-        //#region /wishlist
-        else if (messageText.equals("/wishlist")) {
-            ArrayList<Game> wishlist = db.readWishlist(telegramId);
-
-            if (wishlist.isEmpty())
-                GameSender.sendEmptyGameList(telegramClient, chatId);
-            else {
-                try {
-                    for (Game g : wishlist)
-                        GameSender.sendGame(telegramClient, chatId, g, telegramId);
-                } catch (Exception e) {
-                    System.err.println("Errore stampa wishlist");
+                if (library.isEmpty())
+                    GameSender.sendEmptyGameList(telegramClient, chatId);
+                else {
+                    try {
+                        for (Game g : library)
+                            GameSender.sendGame(telegramClient, chatId, g, telegramId);
+                    } catch (Exception e) {
+                        System.err.println("Errore stampa libreria");
+                    }
                 }
+
+                return;
             }
+            //#endregion
 
-            return;
-        }
-        //#endregion
+            //#region /wishlist
+            else if (messageText.equals("/wishlist")) {
+                ArrayList<Game> wishlist = db.readWishlist(telegramId);
 
-        //#region /stats
-        else if (messageText.equals("/stats")) {
-            int libraryCount = db.countLibrary(telegramId);
-            int wishlistCount = db.countWishlist(telegramId);
-            String stats;
+                if (wishlist.isEmpty())
+                    GameSender.sendEmptyGameList(telegramClient, chatId);
+                else {
+                    try {
+                        for (Game g : wishlist)
+                            GameSender.sendGame(telegramClient, chatId, g, telegramId);
+                    } catch (Exception e) {
+                        System.err.println("Errore stampa wishlist");
+                    }
+                }
 
-            if (libraryCount == 0 && wishlistCount == 0)
-                stats = "Non hai ancora aggiunto giochi.\nUsa /game per iniziare!";
-            else {
-                stats = """
+                return;
+            }
+            //#endregion
+
+            //#region /stats
+            else if (messageText.equals("/stats")) {
+                int libraryCount = db.countLibrary(telegramId);
+                int wishlistCount = db.countWishlist(telegramId);
+                String stats;
+
+                if (libraryCount == 0 && wishlistCount == 0)
+                    stats = "Non hai ancora aggiunto giochi.\nUsa /game per iniziare!";
+                else {
+                    stats = """
                         📊 *Le tue statistiche*
                         
                         🎮 Giochi in libreria: %d
                         ❤️ Giochi in wishlist: %d
                         """.formatted(libraryCount, wishlistCount);
-            }
+                }
 
-            SendMessage message = SendMessage.builder()
-                    .chatId(chatId)
-                    .text(stats)
-                    .parseMode("Markdown")
-                    .build();
+                SendMessage message = SendMessage.builder()
+                        .chatId(chatId)
+                        .text(stats)
+                        .parseMode("Markdown")
+                        .build();
 
-            try {
-                telegramClient.execute(message);
-            } catch (TelegramApiException e) {
-                System.err.println("Errore /stats: " + e.getMessage());
-            }
+                try {
+                    telegramClient.execute(message);
+                } catch (TelegramApiException e) {
+                    System.err.println("Errore /stats: " + e.getMessage());
+                }
 
-            return;
-        }
-        //#endregion
-
-        //#region /steamwishlist
-        else if (messageText.equals("/steamwishlist")) {
-            ArrayList<String> wishlistNames = db.getWishlistGameNames(telegramId);
-
-            if (wishlistNames.isEmpty()) {
-                GameSender.sendEmptyGameList(telegramClient, chatId);
                 return;
             }
+            //#endregion
 
-            ArrayList<String> lines = new ArrayList<>();
-            lines.add("🎮 *Sconti wishlist:*");
+            //#region /steamwishlist
+            else if (messageText.equals("/steamwishlist")) {
+                ArrayList<String> wishlistNames = db.getWishlistGameNames(telegramId);
 
-            for (String name : wishlistNames)
-                lines.add(steamService.getDiscountByName(name));
+                if (wishlistNames.isEmpty()) {
+                    GameSender.sendEmptyGameList(telegramClient, chatId);
+                    return;
+                }
 
-            SendMessage msg = SendMessage.builder()
-                    .chatId(chatId)
-                    .text(String.join("\n\n", lines))
-                    .parseMode("Markdown")
-                    .build();
+                ArrayList<String> lines = new ArrayList<>();
+                lines.add("🎮 *Sconti wishlist:*");
 
-            try {
-                telegramClient.execute(msg);
-            } catch (TelegramApiException e) {
-                System.err.println("Errore /steamwishlist: " + e.getMessage());
+                for (String name : wishlistNames)
+                    lines.add(steamService.getDiscountByName(name));
+
+                SendMessage msg = SendMessage.builder()
+                        .chatId(chatId)
+                        .text(String.join("\n\n", lines))
+                        .parseMode("Markdown")
+                        .build();
+
+                try {
+                    telegramClient.execute(msg);
+                } catch (TelegramApiException e) {
+                    System.err.println("Errore /steamwishlist: " + e.getMessage());
+                }
+
+                return;
             }
+            //#endregion
 
-            return;
-        }
-        //#endregion
+            //#region /steam
+            else if (messageText.startsWith("/steam")) {
+                String[] parts = messageText.split(" ", 2);
 
-        //#region /steam
-        else if (messageText.startsWith("/steam")) {
-            String[] parts = messageText.split(" ", 2);
+                if (parts.length < 2 || parts[1].isBlank()) {
+                    response = "Uso corretto:\n/steam <nome del gioco>";
+                } else {
+                    String gameName = parts[1];
+                    response = steamService.getDiscountByName(gameName);
+                }
 
-            if (parts.length < 2 || parts[1].isBlank()) {
-                response = "Uso corretto:\n/steam <nome del gioco>";
-            } else {
-                String gameName = parts[1];
-                response = steamService.getDiscountByName(gameName);
+                SendMessage message = SendMessage.builder()
+                        .chatId(chatId)
+                        .text(response)
+                        .parseMode("Markdown")
+                        .build();
+
+                try {
+                    telegramClient.execute(message);
+                } catch (Exception e) {
+                    System.err.println("Errore /steam: " + e.getMessage());
+                }
+                return;
             }
+            //#endregion
+
+            //#region comandi non riconosciuti
+            else {
+                response = "Comando non riconosciuto. Usa /help";
+            }
+            //#endregion
 
             SendMessage message = SendMessage.builder()
                     .chatId(chatId)
                     .text(response)
-                    .parseMode("Markdown")
                     .build();
 
             try {
                 telegramClient.execute(message);
-            } catch (Exception e) {
-                System.err.println("Errore /steam: " + e.getMessage());
+            } catch (TelegramApiException e) {
+                System.err.println("Errore sendMessage gestione messaggi testuali: " + e.getMessage());
             }
-            return;
-        }
-        //#endregion
 
-        //#region comandi non riconosciuti
-        else {
-            response = "Comando non riconosciuto. Usa /help";
-        }
-        //#endregion
-
-        SendMessage message = SendMessage.builder()
-                .chatId(chatId)
-                .text(response)
-                .build();
-
-        try {
-            telegramClient.execute(message);
-        } catch (TelegramApiException e) {
-            System.err.println("Errore sendMessage gestione messaggi testuali: " + e.getMessage());
         }
         //#endregion
     }

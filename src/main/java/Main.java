@@ -1,5 +1,6 @@
 import org.telegram.telegrambots.longpolling.TelegramBotsLongPollingApplication;
 
+//NomeBot --> GameBot (@PlayLibraryBot)
 //Creazione bot token --> https://www.andreaminini.com/web/telegram/come-creare-un-bot-su-telegram
 
 public class Main {
