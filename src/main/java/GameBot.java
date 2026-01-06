@@ -157,37 +157,37 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
             //#region /start
             if (messageText.equals("/start")) {
                 response = """
-            👋 *Benvenuto su GameBot!*
-            
-            🎮 Il tuo assistente personale per il mondo dei videogiochi.
-            Con GameBot puoi scoprire nuovi giochi, gestire la tua libreria,
-            controllare sconti su Steam e molto altro.
-            
-            ✨ *Cosa puoi fare:*
-            🔍 Cercare videogiochi
-            📚 Gestire la tua libreria personale
-            ❤️ Salvare giochi nella wishlist
-            🎲 Scoprire giochi casuali
-            🧩 Trovare DLC e giochi della stessa serie
-            💸 Controllare prezzi e sconti su Steam
-            
-            📌 *Comandi principali:*
-            /game <nome> — Cerca un videogioco
-            /random — Gioco casuale
-            /library — La tua libreria
-            /wishlist — La tua wishlist
-            /steam <nome> — Prezzi e sconti Steam
-            /steamwishlist — Sconti sui giochi in wishlist
-            /gameseries <nome> — Giochi della stessa serie
-            /gamedlc <nome> — DLC ed espansioni
-            /genres — Tutti i generi disponibili
-            /help — Lista completa dei comandi
-            
-            🚀 Inizia subito cercando un gioco:
-            👉 `/game Portal`
-            
-            Buon divertimento! 🎮🔥
-            """;
+                        👋 *Benvenuto su GameBot!*
+                        
+                        🎮 Il tuo assistente personale per il mondo dei videogiochi.
+                        Con GameBot puoi scoprire nuovi giochi, gestire la tua libreria,
+                        controllare sconti su Steam e molto altro.
+                        
+                        ✨ *Cosa puoi fare:*
+                        🔍 Cercare videogiochi
+                        📚 Gestire la tua libreria personale
+                        ❤️ Salvare giochi nella wishlist
+                        🎲 Scoprire giochi casuali
+                        🧩 Trovare DLC e giochi della stessa serie
+                        💸 Controllare prezzi e sconti su Steam
+                        
+                        📌 *Comandi principali:*
+                        /game <nome> — Cerca un videogioco
+                        /random — Gioco casuale
+                        /library — La tua libreria
+                        /wishlist — La tua wishlist
+                        /steam <nome> — Prezzi e sconti Steam
+                        /steamwishlist — Sconti sui giochi in wishlist
+                        /gameseries <nome> — Giochi della stessa serie
+                        /gamedlc <nome> — DLC ed espansioni
+                        /genres — Tutti i generi disponibili
+                        /help — Lista completa dei comandi
+                        
+                        🚀 Inizia subito cercando un gioco:
+                        👉 `/game Portal`
+                        
+                        Buon divertimento! 🎮🔥
+                        """;
 
                 SendMessage message = SendMessage.builder()
                         .chatId(chatId)
@@ -208,26 +208,50 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
             //#region /help
             else if (messageText.equals("/help")) {
                 response = """
-                    🎮 GameBot - Comandi disponibili
-                    
-                    /help - Mostra questo messaggio
-                    /game <nome> - Cerca un videogioco
-                    /gameseries <nome> - Cerca tutta la serie di un videogioco
-                    /gamedlc <nome> - Cerca tutte le addition del gioco
-                    /genres - Ritorna la lista di tutti i generi disponibili
-                    /random - Ritorna un videogioco random
-                    /random <numero> - Ritorna N videogiochi random
-                    /random genre <genere> - Ritorna un videogioco random del genere specificato
-                    /random genre <genere> <numero> - Ritorna N videogiochi random del genere specificato
-                    /recommend <genere> - Ritorna 5 videogiochi del genere specificato
-                    /recommend <genere> <numero> - Ritorna N videogiochi del genere specificato
-                    /stats - Mostra il numero di giochi in libreria e wishlist
-                    /library - Mostra la tua libreria
-                    /wishlist - Mostra la tua wishlist
-                    /steam <nome> - Mostra il prezzo del gioco cercato
-                    /steamwishlist - Controlla i prezzi dei giochi in wishlist
-                    """;
+                🎮 *GameBot* — Comandi disponibili
+                
+                ---
+                
+                🔍 *Ricerca giochi*
+                • /game <nome> — Cerca un videogioco  
+                • /gameseries <nome> — Giochi della stessa serie  
+                • /gamedlc <nome> — DLC ed espansioni del gioco  
+                • /genres — Lista di tutti i generi disponibili  
+                
+                ---
+                
+                🎲 *Giochi casuali*
+                • /random — Videogioco casuale  
+                • /random <numero> — N videogiochi casuali  
+                • /random genre <genere> — Random per genere  
+                • /random genre <genere> <numero> — N giochi random per genere  
+                
+                ---
+                
+                ⭐ *Consigli*
+                • /recommend <genere> — 5 giochi consigliati per genere  
+                • /recommend <genere> <numero> — N giochi consigliati  
+                
+                ---
+                
+                📚 *Libreria & Wishlist*
+                • /library — La tua libreria personale  
+                • /wishlist — La tua wishlist  
+                • /stats — Statistiche personali  
+                
+                ---
+                
+                💸 *Steam*
+                • /steam <nome> — Prezzo e sconti Steam  
+                • /steamwishlist — Sconti sui giochi in wishlist  
+                
+                ---
+                
+                ℹ️ *Altro*
+                • /help — Mostra questo messaggio
+                """;
             }
+
             //#endregion
 
             //#region /gameseries <nome>
@@ -576,6 +600,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
             SendMessage message = SendMessage.builder()
                     .chatId(chatId)
                     .text(response)
+                    .parseMode("Markdown")
                     .build();
 
             try {

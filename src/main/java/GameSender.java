@@ -68,14 +68,7 @@ public class GameSender {
             🏆 Metacritic: %d
             🖥 Piattaforme: %s
             🏷 Generi: %s
-            """.formatted(
-                game.name,
-                game.released != null ? game.released : "N/D",
-                game.rating,
-                game.metacritic,
-                piattaforme,
-                generi
-        );
+            """.formatted(game.name, game.released != null ? game.released : "N/D", game.rating, game.metacritic, piattaforme, generi);
     }
 
     public static InlineKeyboardMarkup buildKeyboard(Game game, long telegramId) {
@@ -119,12 +112,7 @@ public class GameSender {
     public static void sendEmptyGameList(TelegramClient telegramClient, long chatId) {
         SendMessage msg = SendMessage.builder()
                 .chatId(chatId)
-                .text("""
-                📚 *La collezione è vuota!*
-
-                Non hai ancora aggiunto nessun gioco
-                Usa /game per cercarne uno e aggiungerlo!
-                """)
+                .text("📚 *La collezione è vuota!*\n\nNon hai ancora aggiunto nessun gioco\nUsa /game per cercarne uno e aggiungerlo!")
                 .parseMode("Markdown")
                 .build();
 

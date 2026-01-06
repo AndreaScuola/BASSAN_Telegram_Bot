@@ -14,7 +14,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 public class SteamService {
-
     private final HttpClient client = HttpClient.newHttpClient();
     private final Gson gson = new Gson();
 
@@ -81,19 +80,16 @@ public class SteamService {
         if (info == null)
             return "📌 *" + name + "* — prezzo non disponibile";
 
-        if (info.discountPercent > 0) {
+        if (info.discountPercent > 0)
             return """
-                    🛍 *%s*
-                    🔻 -%d%%
-                    💰 %.2f€ (era %.2f€)
-                    """.formatted(
-                    info.name,
-                    info.discountPercent,
-                    info.salePrice / 100.0,
-                    info.originalPrice / 100.0
-            );
-        }
+                🛍 *%s*
+                🔻 -%d%%
+                💰 %.2f€ (era %.2f€)
+                """.formatted(info.name, info.discountPercent, info.salePrice / 100.0, info.originalPrice / 100.0);
 
-        return "📊 *" + info.name + "* — nessuno sconto";
+        return """
+            🎮 *%s*
+            💰 %.2f€
+            """.formatted(info.name, info.originalPrice / 100.0);
     }
 }
