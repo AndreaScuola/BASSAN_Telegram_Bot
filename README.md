@@ -196,3 +196,85 @@ APIKEY_RAWG = inserisci_qui_la_tua_chiave
 ```properties
 BOT_TOKEN = inserisci_qui_il_token_bot
 ```
+
+---
+
+## ⚙️ Dipendenze maven
+
+```
+<dependencies>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.13.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.telegram</groupId>
+            <artifactId>telegrambots-longpolling</artifactId>
+            <version>9.2.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.telegram</groupId>
+            <artifactId>telegrambots-client</artifactId>
+            <version>9.2.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-configuration2</artifactId>
+            <version>2.12.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-beanutils</groupId>
+            <artifactId>commons-beanutils</artifactId>
+            <version>1.9.4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <version>RELEASE</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <version>3.45.1.0</version>
+        </dependency>
+    </dependencies>
+```
+
+---
+
+## ⚙️ Esempi query più importanti
+
+### Query API
+
+- Ottenere i dati di un gioco a partire dal nome
+```https://api.rawg.io/api/games?key=b4a500e320d749ba9793d7c490793c2e&search=<nome>&page_size=1```
+
+- Ottenere i dati di un gioco a partire dal suo ID nell'API di RAWG
+```https://api.rawg.io/api/games/<Id>?key=b4a500e320d749ba9793d7c490793c2e&page_size=1```
+
+- Ottenere giochi appartenenti ad un genere
+```https://api.rawg.io/api/games?key=b4a500e320d749ba9793d7c490793c2e&genres=<genere>&page_size=5```
+
+---
+
+### Query DB locale
+
+- Ottenere l'ID dell'utente nel DB a partire dall'ID telegram
+```SELECT id FROM Users WHERE telegram_id = ?```
+
+- Inserire nel DB un gioco
+```INSERT OR IGNORE INTO Games(id, name, released, rating, metacritic, image_url) VALUES (?, ?, ?, ?, ?, ?)```
+
+- Inserire un gioco nella libreria di un utente
+```INSERT OR IGNORE INTO Library (user_id, game_id) VALUES (?, ?)```
+
+- Ottenere tutti i giochi presenti nella libreria di un utente
+```SELECT g.* FROM Library l INNER JOIN Games g ON l.game_id = g.id WHERE l.user_id = ? ORDER BY g.name```
