@@ -185,3 +185,14 @@ Ogni utente Telegram può salvare più giochi nella propria libreria e wishlist.
 
 ```properties
 APIKEY_RAWG = inserisci_qui_la_tua_chiave
+```
+
+
+### 2) Crea un bot tramite BotFather
+
+1. Crea il nuovo bot seguendo la documentazione di BotFather
+2. Inserisci il bot token nel file `config.properties`
+
+```properties
+BOT_TOKEN = inserisci_qui_il_token_bot
+```
