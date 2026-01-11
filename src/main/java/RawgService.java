@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Random;
 
 public class RawgService extends ApiClient {
+    private static final String RAWG_BASE_URL = "https://api.rawg.io/api/";
+    private static final String API_KEY = ConfigurationSingleton.getInstance().getProperty("APIKEY_RAWG");
     private final Random random;
     private final Gson gson;
 
@@ -15,10 +17,18 @@ public class RawgService extends ApiClient {
         gson = new Gson();
     }
 
+    public String getRawgUrl(String endpoint){
+        return RAWG_BASE_URL + endpoint + "?key=" + API_KEY;
+    }
+
+    public String getRawgUrl(String endpoint, String queryParams){
+        return RAWG_BASE_URL + endpoint + "?key=" + API_KEY + "&" + queryParams;
+    }
+
     public Game selectGameById(int id) {
         String endpoint = "games/" + id;
         String params = "page_size=1";
-        var response = getHttpResponse(endpoint, params);
+        var response = getHttpResponse(getRawgUrl(endpoint, params));
 
         if (response.statusCode() != 200) {
             System.err.println("ERRORE API RAWG: " + response.statusCode());
@@ -37,7 +47,7 @@ public class RawgService extends ApiClient {
 
     public GameResponse selectGameByName(String name) {
         String params = "search=" + encode(name) + "&page_size=1";
-        var response = getHttpResponse("games", params);
+        var response = getHttpResponse(getRawgUrl("games", params));
 
         if (response.statusCode() != 200)
             throw new RuntimeException("ERRORE API RAWG: " + response.statusCode());
@@ -53,8 +63,8 @@ public class RawgService extends ApiClient {
 
         int gameId = search.results.get(0).id; //Prendo l'id del gioco per l'endpoint
 
-        String endpoint = "games/" + gameId + "/game-series";
-        var response = getHttpResponse(endpoint);
+        String url = getRawgUrl("games/" + gameId + "/game-series");
+        var response = getHttpResponse(url);
 
         if (response.statusCode() != 200)
             return new ArrayList<>();
@@ -72,7 +82,7 @@ public class RawgService extends ApiClient {
         int randomPage = random.nextInt(500) + 1;
 
         String params = "page_size=20&page=" + randomPage;
-        var response = getHttpResponse("games", params);
+        var response = getHttpResponse(getRawgUrl("games", params));
 
         GameResponse gameResponse = new Gson().fromJson(response.body(), GameResponse.class);
 
@@ -94,7 +104,7 @@ public class RawgService extends ApiClient {
                     "&page_size=20" +
                     "&page=" + page;
 
-            var response = getHttpResponse("games", params);
+            var response = getHttpResponse(getRawgUrl("games", params));
             GameResponse gameResponse = new Gson().fromJson(response.body(), GameResponse.class);
 
             if (gameResponse != null && gameResponse.results != null)
@@ -115,7 +125,7 @@ public class RawgService extends ApiClient {
                         "&ordering=-rating" +
                         "&page_size=" + limit;
 
-        var response = getHttpResponse("games", params);
+        var response = getHttpResponse(getRawgUrl("games", params));
         GameResponse gameResponse = new Gson().fromJson(response.body(), GameResponse.class);
 
         if(gameResponse == null || gameResponse.results.isEmpty())
@@ -124,8 +134,7 @@ public class RawgService extends ApiClient {
     }
 
     public List<Genre> getAllGenres(){
-        String endpoint = "genres";
-        var response = getHttpResponse(endpoint);
+        var response = getHttpResponse(getRawgUrl("genres"));
         GenreResponse genreResponse = new Gson().fromJson(response.body(), GenreResponse.class);
         if(genreResponse == null || genreResponse.results.isEmpty())
             return new ArrayList<>();
@@ -139,8 +148,8 @@ public class RawgService extends ApiClient {
             return new ArrayList<>();
 
         int gameId = search.results.get(0).id; //Prendo l'id del gioco per l'endpoint
-        String endpoint = "games/" + gameId + "/additions"; //Endpoint DLC
-        var response = getHttpResponse(endpoint);
+        String url = getRawgUrl("games/" + gameId + "/additions"); //Endpoint DLC
+        var response = getHttpResponse(url);
 
         if (response.statusCode() != 200)
             return new ArrayList<>();
@@ -154,8 +163,8 @@ public class RawgService extends ApiClient {
     }
 
     public String getTrailerUrl(int gameId) {
-        String endpoint = "games/" + gameId + "/movies";
-        var response = getHttpResponse(endpoint);
+        String url = getRawgUrl("games/" + gameId + "/movies");
+        var response = getHttpResponse(url);
 
         if (response.statusCode() != 200)
             return null;

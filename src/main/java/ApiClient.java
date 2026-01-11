@@ -6,14 +6,10 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 
 public class ApiClient {
-    private static final String RAWG_BASE_URL = "https://api.rawg.io/api/";
-    private static final String API_KEY = ConfigurationSingleton.getInstance().getProperty("APIKEY_RAWG");
     private final HttpClient client = HttpClient.newHttpClient();
 
-    protected HttpResponse<String> getHttpResponse(String endpoint) {
+    protected HttpResponse<String> getHttpResponse(String url) {
         try {
-            String url = RAWG_BASE_URL + endpoint + "?key=" + API_KEY;
-
             HttpRequest request = HttpRequest.newBuilder()
                     .header("Content-Type", "application/json")
                     .uri(URI.create(url))
@@ -22,25 +18,8 @@ public class ApiClient {
 
             return client.send(request, HttpResponse.BodyHandlers.ofString());
         } catch (Exception e) {
-            throw new RuntimeException("Errore chiamata API RAWG", e);
-        }
-    }
-
-    protected HttpResponse<String> getHttpResponse(String endpoint, String queryParams) {
-        try {
-            String url = RAWG_BASE_URL + endpoint
-                    + "?key=" + API_KEY
-                    + "&" + queryParams;
-
-            HttpRequest request = HttpRequest.newBuilder()
-                    .header("Content-Type", "application/json")
-                    .uri(URI.create(url))
-                    .GET()
-                    .build();
-
-            return client.send(request, HttpResponse.BodyHandlers.ofString());
-        } catch (Exception e) {
-            throw new RuntimeException("Errore chiamata API RAWG", e);
+            System.err.println("Errore chiamata API: " + e.getMessage());
+            return null;
         }
     }
 

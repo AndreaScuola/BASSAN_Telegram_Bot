@@ -13,20 +13,14 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-public class SteamService {
+public class SteamService extends ApiClient{
     private final HttpClient client = HttpClient.newHttpClient();
     private final Gson gson = new Gson();
 
     public int getAppIdByName(String name) {
         try {
             String url = "https://store.steampowered.com/api/storesearch/?term=" + URLEncoder.encode(name, StandardCharsets.UTF_8) + "&l=english&cc=US";
-
-            HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .GET()
-                    .build();
-
-            HttpResponse<String> res = client.send(req, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> res = getHttpResponse(url);
             SteamSearchResponse response = gson.fromJson(res.body(), SteamSearchResponse.class);
 
             if (response != null && response.items != null && !response.items.isEmpty())
@@ -41,13 +35,7 @@ public class SteamService {
     public SteamDiscountInfo getDiscountInfo(int appid) {
         try {
             String url = "https://store.steampowered.com/api/appdetails?appids=" + appid + "&cc=US&l=english";
-
-            HttpRequest req = HttpRequest.newBuilder()
-                    .uri(URI.create(url))
-                    .GET()
-                    .build();
-
-            HttpResponse<String> res = client.send(req, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> res = getHttpResponse(url);
 
             Type type = new TypeToken<Map<String, SteamAppWrapper>>() {}.getType(); //Serve per specificare in cosa deserializzare
             Map<String, SteamAppWrapper> map = gson.fromJson(res.body(), type);

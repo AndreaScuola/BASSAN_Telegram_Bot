@@ -445,7 +445,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                         """.formatted(libraryCount, wishlistCount);
                 }
 
-                GameSender.sendMessage(telegramClient, chatId, stats);
+                GameSender.sendMarkdownMessage(telegramClient, chatId, stats);
                 return;
             }
             //#endregion
