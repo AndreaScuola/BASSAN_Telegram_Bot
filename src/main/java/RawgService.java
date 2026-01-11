@@ -1,8 +1,6 @@
 import com.google.gson.Gson;
-import modelli.Game;
-import modelli.GameResponse;
-import modelli.Genre;
-import modelli.GenreResponse;
+import modelli.*;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -153,5 +151,20 @@ public class RawgService extends ApiClient {
             return new ArrayList<>();
 
         return new ArrayList<>(dlcResponse.results);
+    }
+
+    public String getTrailerUrl(int gameId) {
+        String endpoint = "games/" + gameId + "/movies";
+        var response = getHttpResponse(endpoint);
+
+        if (response.statusCode() != 200)
+            return null;
+
+        TrailerResponse tr = gson.fromJson(response.body(), TrailerResponse.class);
+
+        if (tr == null || tr.results == null || tr.results.isEmpty())
+            return null;
+
+        return tr.results.get(0).data.max;
     }
 }

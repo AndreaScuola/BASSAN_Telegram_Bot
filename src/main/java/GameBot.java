@@ -6,7 +6,9 @@ import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient;
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendVideo;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
@@ -156,102 +158,16 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
 
             //#region /start
             if (messageText.equals("/start")) {
-                response = """
-                        👋 *Benvenuto su GameBot!*
-                        
-                        🎮 Il tuo assistente personale per il mondo dei videogiochi.
-                        Con GameBot puoi scoprire nuovi giochi, gestire la tua libreria,
-                        controllare sconti su Steam e molto altro.
-                        
-                        ✨ *Cosa puoi fare:*
-                        🔍 Cercare videogiochi
-                        📚 Gestire la tua libreria personale
-                        ❤️ Salvare giochi nella wishlist
-                        🎲 Scoprire giochi casuali
-                        🧩 Trovare DLC e giochi della stessa serie
-                        💸 Controllare prezzi e sconti su Steam
-                        
-                        📌 *Comandi principali:*
-                        /game <nome> — Cerca un videogioco
-                        /random — Gioco casuale
-                        /library — La tua libreria
-                        /wishlist — La tua wishlist
-                        /steam <nome> — Prezzi e sconti Steam
-                        /steamwishlist — Sconti sui giochi in wishlist
-                        /gameseries <nome> — Giochi della stessa serie
-                        /gamedlc <nome> — DLC ed espansioni
-                        /genres — Tutti i generi disponibili
-                        /help — Lista completa dei comandi
-                        
-                        🚀 Inizia subito cercando un gioco:
-                        👉 `/game Portal`
-                        
-                        Buon divertimento! 🎮🔥
-                        """;
-
-                SendMessage message = SendMessage.builder()
-                        .chatId(chatId)
-                        .text(response)
-                        .parseMode("Markdown")
-                        .build();
-
-                try {
-                    telegramClient.execute(message);
-                } catch (Exception e) {
-                    System.err.println("Errore /start: " + e.getMessage());
-                }
-
+                GameSender.sendStart(telegramClient, chatId);
                 return;
             }
             //#endregion
 
             //#region /help
             else if (messageText.equals("/help")) {
-                response = """
-                🎮 *GameBot* — Comandi disponibili
-                
-                ---
-                
-                🔍 *Ricerca giochi*
-                • /game <nome> — Cerca un videogioco  
-                • /gameseries <nome> — Giochi della stessa serie  
-                • /gamedlc <nome> — DLC ed espansioni del gioco  
-                • /genres — Lista di tutti i generi disponibili  
-                
-                ---
-                
-                🎲 *Giochi casuali*
-                • /random — Videogioco casuale  
-                • /random <numero> — N videogiochi casuali  
-                • /random genre <genere> — Random per genere  
-                • /random genre <genere> <numero> — N giochi random per genere  
-                
-                ---
-                
-                ⭐ *Consigli*
-                • /recommend <genere> — 5 giochi consigliati per genere  
-                • /recommend <genere> <numero> — N giochi consigliati  
-                
-                ---
-                
-                📚 *Libreria & Wishlist*
-                • /library — La tua libreria personale  
-                • /wishlist — La tua wishlist  
-                • /stats — Statistiche personali  
-                
-                ---
-                
-                💸 *Steam*
-                • /steam <nome> — Prezzo e sconti Steam  
-                • /steamwishlist — Sconti sui giochi in wishlist  
-                
-                ---
-                
-                ℹ️ *Altro*
-                • /help — Mostra questo messaggio
-                """;
+                GameSender.sendHelp(telegramClient, chatId);
+                return;
             }
-
             //#endregion
 
             //#region /gameseries <nome>
@@ -259,7 +175,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                 String[] parts = messageText.split(" ", 2);
 
                 if (parts.length < 2 || parts[1].isBlank())
-                    response = "Uso corretto:\n/gameseries <nome del gioco>";
+                    GameSender.sendMessage(telegramClient, chatId, "Uso corretto:\n/gameseries <nome del gioco>");
                 else {
                     String gameName = parts[1];
 
@@ -275,9 +191,11 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                             GameSender.sendGame(telegramClient, chatId, g, telegramId);
                         return;
                     } catch (Exception e) {
-                        response = "Errore RAWG";
+                        GameSender.sendMessage(telegramClient, chatId,"Errore RAWG");
                     }
                 }
+
+                return;
             }
             //#endregion
 
@@ -286,7 +204,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                 String[] parts = messageText.split(" ", 2);
 
                 if (parts.length < 2 || parts[1].isBlank())
-                    response = "Uso corretto:\n/gamedlc <nome del gioco>";
+                    GameSender.sendMessage(telegramClient, chatId,"Uso corretto:\n/gamedlc <nome del gioco>");
                 else {
                     String gameName = parts[1];
 
@@ -300,12 +218,13 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
 
                         for (Game g : dlcs)
                             GameSender.sendGame(telegramClient, chatId, g, telegramId);
-
                         return;
                     } catch (Exception e) {
-                        response = "Errore RAWG";
+                        GameSender.sendMessage(telegramClient, chatId,"Errore RAWG");
                     }
                 }
+
+                return;
             }
             //#endregion
 
@@ -314,7 +233,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                 String[] parts = messageText.split(" ", 2);
 
                 if (parts.length < 2 || parts[1].isBlank())
-                    response = "Uso corretto:\n/game <nome del gioco>";
+                    GameSender.sendMessage(telegramClient, chatId,"Uso corretto:\n/game <nome del gioco>");
                 else {
                     String gameName = parts[1];
 
@@ -322,16 +241,18 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                         GameResponse gameResponse = rawgService.selectGameByName(gameName);
 
                         if (gameResponse == null || gameResponse.results.isEmpty())
-                            response = "Nessun gioco trovato";
+                            GameSender.sendMessage(telegramClient, chatId,"Nessun gioco trovato");
                         else {
                             Game game = gameResponse.results.get(0);
                             GameSender.sendGame(telegramClient, chatId, game, telegramId);
                             return;
                         }
                     } catch (Exception e) {
-                        response = "Errore RAWG";
+                        GameSender.sendMessage(telegramClient, chatId,"Errore RAWG");
                     }
                 }
+
+                return;
             }
             //#endregion
 
@@ -364,7 +285,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                         List<Game> games = rawgService.getRandomGame(limit);
 
                         if (games.isEmpty())
-                            response = "Nessun gioco trovato";
+                            GameSender.sendMessage(telegramClient, chatId,"Nessun gioco trovato");
                         else {
                             for (Game g : games)
                                 GameSender.sendGame(telegramClient, chatId, g, telegramId);
@@ -391,7 +312,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                         List<Game> games = rawgService.getRandomByGenre(genre, limit);
 
                         if (games.isEmpty())
-                            response = "Nessun gioco trovato per il genere: " + genre;
+                            GameSender.sendMessage(telegramClient, chatId,"Nessun gioco trovato per il genere: " + genre);
                         else {
                             for (Game g : games)
                                 GameSender.sendGame(telegramClient, chatId, g, telegramId);
@@ -399,10 +320,12 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                         }
                     }
                     else
-                        response = "Uso corretto:\n/random <numero>\n/random genre <genere> <numero>";
+                        GameSender.sendMessage(telegramClient, chatId,"Uso corretto:\n/random <numero>\n/random genre <genere> <numero>");
                 } catch (Exception e) {
-                    response = "Errore RAWG";
+                    GameSender.sendMessage(telegramClient, chatId,"Errore RAWG");
                 }
+
+                return;
             }
             //#endregion
 
@@ -410,7 +333,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
             else if (messageText.startsWith("/recommend")) {
                 String[] parts = messageText.split(" ");
                 if (parts.length < 2)
-                    response = "Uso corretto:\n/recommend <genere> <numero>";
+                    GameSender.sendMessage(telegramClient, chatId,"Uso corretto:\n/recommend <genere> <numero>");
                 else {
                     String generi = parts[1];
                     int limit = 5;
@@ -431,7 +354,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                         List<Game> games = rawgService.recommendByGenres(generi, limit);
 
                         if (games.isEmpty())
-                            response = "Nessun gioco trovato";
+                            GameSender.sendMessage(telegramClient, chatId,"Nessun gioco trovato");
                         else {
                             for (Game g : games)
                                 GameSender.sendGame(telegramClient, chatId, g, telegramId);
@@ -439,9 +362,10 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                             return;
                         }
                     } catch (Exception e) {
-                        response = "Errore RAWG";
+                        GameSender.sendMessage(telegramClient, chatId,"Errore RAWG");
                     }
                 }
+                return;
             }
             //#endregion
 
@@ -451,15 +375,19 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                     List<Genre> genres = rawgService.getAllGenres();
 
                     if (genres.isEmpty())
-                        response = "Nessun genere trovato.";
+                        GameSender.sendMessage(telegramClient, chatId,"Nessun genere trovato");
                     else {
                         response = "🎮 Generi disponibili:\n\n";
                         for (Genre g : genres)
                             response += "- " + g.slug + "\n";
+
+                        GameSender.sendMessage(telegramClient, chatId, response);
+                        return;
                     }
                 } catch (Exception e) {
-                    response = "Errore durante il recupero dei generi";
+                    GameSender.sendMessage(telegramClient, chatId,"Errore durante il recupero dei generi");
                 }
+                return;
             }
             //#endregion
 
@@ -477,7 +405,6 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                         System.err.println("Errore stampa libreria");
                     }
                 }
-
                 return;
             }
             //#endregion
@@ -518,19 +445,37 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                         """.formatted(libraryCount, wishlistCount);
                 }
 
-                SendMessage message = SendMessage.builder()
-                        .chatId(chatId)
-                        .text(stats)
-                        .parseMode("Markdown")
-                        .build();
+                GameSender.sendMessage(telegramClient, chatId, stats);
+                return;
+            }
+            //#endregion
 
-                try {
-                    telegramClient.execute(message);
-                } catch (TelegramApiException e) {
-                    System.err.println("Errore /stats: " + e.getMessage());
+            //#region /trailer
+            else if (messageText.startsWith("/trailer")) {
+                String[] parts = messageText.split(" ", 2);
+
+                if (parts.length < 2 || parts[1].isBlank()) {
+                    GameSender.sendMessage(telegramClient, chatId, "Uso corretto:\n/trailer <nome del gioco>");
+                    return;
                 }
 
-                return;
+                try {
+                    GameResponse gr = rawgService.selectGameByName(parts[1]);
+
+                    if (gr.results.isEmpty()) {
+                        GameSender.sendEmptyGameList(telegramClient, chatId, "❌ Gioco non trovato");
+                        return;
+                    }
+
+                    String trailerUrl = rawgService.getTrailerUrl(gr.results.get(0).id);
+
+                    if (trailerUrl == null)
+                        GameSender.sendNoTrailer(telegramClient, chatId);
+                    else
+                        GameSender.sendTrailer(telegramClient, chatId, trailerUrl);
+                } catch (Exception e) {
+                    GameSender.sendMessage(telegramClient, chatId, "❌ Errore nel recupero del trailer");
+                }
             }
             //#endregion
 
@@ -549,18 +494,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                 for (String name : wishlistNames)
                     lines.add(steamService.getDiscountByName(name));
 
-                SendMessage msg = SendMessage.builder()
-                        .chatId(chatId)
-                        .text(String.join("\n\n", lines))
-                        .parseMode("Markdown")
-                        .build();
-
-                try {
-                    telegramClient.execute(msg);
-                } catch (TelegramApiException e) {
-                    System.err.println("Errore /steamwishlist: " + e.getMessage());
-                }
-
+                GameSender.sendMarkdownMessage(telegramClient, chatId,(String.join("\n\n", lines)));
                 return;
             }
             //#endregion
@@ -576,39 +510,16 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                     response = steamService.getDiscountByName(gameName);
                 }
 
-                SendMessage message = SendMessage.builder()
-                        .chatId(chatId)
-                        .text(response)
-                        .parseMode("Markdown")
-                        .build();
-
-                try {
-                    telegramClient.execute(message);
-                } catch (Exception e) {
-                    System.err.println("Errore /steam: " + e.getMessage());
-                }
+                GameSender.sendMarkdownMessage(telegramClient, chatId, response);
                 return;
             }
             //#endregion
 
             //#region comandi non riconosciuti
             else {
-                response = "Comando non riconosciuto. Usa /help";
+                GameSender.sendMarkdownMessage(telegramClient, chatId, "Comando non riconosciuto. Usa /help");
             }
             //#endregion
-
-            SendMessage message = SendMessage.builder()
-                    .chatId(chatId)
-                    .text(response)
-                    .parseMode("Markdown")
-                    .build();
-
-            try {
-                telegramClient.execute(message);
-            } catch (TelegramApiException e) {
-                System.err.println("Errore sendMessage gestione messaggi testuali: " + e.getMessage());
-            }
-
         }
         //#endregion
     }

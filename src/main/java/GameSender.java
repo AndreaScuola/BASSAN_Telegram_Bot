@@ -13,6 +13,120 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import java.util.ArrayList;
 
 public class GameSender {
+    public static void sendMessage(TelegramClient client, long chatId, String textMessage){
+        SendMessage message = SendMessage.builder()
+                .chatId(chatId)
+                .text(textMessage)
+                .build();
+
+        try {
+            client.execute(message);
+        } catch (Exception e) {
+            System.err.println("Errore stampa message: " + e.getMessage());
+        }
+    }
+
+    public static void sendMarkdownMessage(TelegramClient client, long chatId, String textMessage){
+        SendMessage message = SendMessage.builder()
+                .chatId(chatId)
+                .text(textMessage)
+                .parseMode("Markdown")
+                .build();
+
+        try {
+            client.execute(message);
+        } catch (Exception e) {
+            System.err.println("Errore stampa MD message: " + e.getMessage());
+        }
+    }
+
+    public static void sendStart(TelegramClient client, long chatId) {
+        String text = """
+            👋 *Benvenuto su GameBot!*
+            
+            🎮 Il tuo assistente personale per il mondo dei videogiochi.
+            Con GameBot puoi scoprire nuovi giochi, gestire la tua libreria,
+            controllare sconti su Steam e molto altro.
+            
+            ✨ *Cosa puoi fare:*
+            🔍 Cercare videogiochi
+            📚 Gestire la tua libreria personale
+            ❤️ Salvare giochi nella wishlist
+            🎲 Scoprire giochi casuali
+            🧩 Trovare DLC e giochi della stessa serie
+            💸 Controllare prezzi e sconti su Steam
+            
+            📌 *Comandi principali:*
+            /game <nome> — Cerca un videogioco
+            /random — Gioco casuale
+            /library — La tua libreria
+            /wishlist — La tua wishlist
+            /steam <nome> — Prezzi e sconti Steam
+            /steamwishlist — Sconti sui giochi in wishlist
+            /gameseries <nome> — Giochi della stessa serie
+            /gamedlc <nome> — DLC ed espansioni
+            /genres — Tutti i generi disponibili
+            /help — Lista completa dei comandi
+            
+            🚀 Inizia subito cercando un gioco:
+            👉 `/game Portal`
+            
+            Buon divertimento! 🎮🔥
+            """;
+
+        sendMarkdownMessage(client, chatId, text);
+    }
+
+    public static void sendHelp(TelegramClient client, long chatId) {
+        String text = """
+                🎮 *GameBot* — Comandi disponibili
+                
+                ---
+                
+                🔍 *Ricerca giochi*
+                • /game <nome> — Cerca un videogioco  
+                • /gameseries <nome> — Giochi della stessa serie  
+                • /gamedlc <nome> — DLC ed espansioni del gioco  
+                • /genres — Lista di tutti i generi disponibili  
+                
+                ---
+                
+                🎲 *Giochi casuali*
+                • /random — Videogioco casuale  
+                • /random <numero> — N videogiochi casuali  
+                • /random genre <genere> — Random per genere  
+                • /random genre <genere> <numero> — N giochi random per genere  
+                
+                ---
+                
+                ⭐ *Consigli*
+                • /recommend <genere> — 5 giochi consigliati per genere  
+                • /recommend <genere> <numero> — N giochi consigliati  
+                
+                ---
+                
+                📚 *Libreria & Wishlist*
+                • /library — La tua libreria personale  
+                • /wishlist — La tua wishlist  
+                • /stats — Statistiche personali  
+                
+                ---
+                
+                💸 *Steam*
+                • /steam <nome> — Prezzo e sconti Steam  
+                • /steamwishlist — Sconti sui giochi in wishlist  
+                
+                ---
+                
+                ℹ️ *Altro*
+                • /help — Mostra questo messaggio
+                """;
+
+        sendMarkdownMessage(client, chatId, text);
+    }
+
+
+
     public static void sendGame(TelegramClient client, long chatId, Game game, long telegramId) throws TelegramApiException {
         String caption = buildText(game);
         InlineKeyboardMarkup keyboard = buildKeyboard(game, telegramId);
@@ -166,5 +280,22 @@ public class GameSender {
         } catch (TelegramApiException e) {
             System.err.println("Errore sendEmptyGameListGif: " + e.getMessage());
         }
+    }
+
+    public static void sendTrailer(TelegramClient client, long chatId, String url) {
+        SendMessage msg = SendMessage.builder()
+                .chatId(chatId)
+                .text("🎬 Trailer:\n" + url)
+                .build();
+
+        try {
+            client.execute(msg);
+        } catch (TelegramApiException e) {
+            System.err.println("Errore sendTrailer: " + e.getMessage());
+        }
+    }
+
+    public static void sendNoTrailer(TelegramClient client, long chatId) {
+        sendMessage(client, chatId, "🎬 Trailer non disponibile per questo gioco.");
     }
 }

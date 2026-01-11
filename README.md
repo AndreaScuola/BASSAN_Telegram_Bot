@@ -1,4 +1,4 @@
-# 🎮 GameBot – Telegram Videogame Assistant
+ # 🎮 GameBot – Telegram Videogame Assistant
 
 GameBot è un **bot Telegram** che consente di cercare videogiochi, gestire una **libreria personale** e una **wishlist**, scoprire giochi casuali, visualizzare **DLC e serie**, e controllare **prezzi e sconti su Steam**.
 
