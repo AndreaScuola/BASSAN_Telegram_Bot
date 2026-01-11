@@ -472,7 +472,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                     if (trailerUrl == null)
                         GameSender.sendNoTrailer(telegramClient, chatId);
                     else
-                        GameSender.sendTrailer(telegramClient, chatId, trailerUrl);
+                        GameSender.sendTrailer(telegramClient, chatId, trailerUrl, gr.results.get(0).name);
                 } catch (Exception e) {
                     GameSender.sendMessage(telegramClient, chatId, "❌ Errore nel recupero del trailer");
                 }

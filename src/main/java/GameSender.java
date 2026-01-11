@@ -1,9 +1,11 @@
 import modelli.Game;
+import modelli.GameResponse;
 import modelli.Genre;
 import modelli.PlatformWrapper;
 import org.telegram.telegrambots.meta.api.methods.send.SendAnimation;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.methods.send.SendVideo;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -282,10 +284,31 @@ public class GameSender {
         }
     }
 
-    public static void sendTrailer(TelegramClient client, long chatId, String url) {
+
+
+
+
+
+
+
+
+    public static void sendTrailer(TelegramClient client, long chatId, String trailerUrl, String gameName) {
+        InlineKeyboardButton btn = InlineKeyboardButton.builder()
+                .text("▶️ Guarda Trailer")
+                .url(trailerUrl)
+                .build();
+
+        InlineKeyboardRow row = new InlineKeyboardRow();
+        row.add(btn);
+
+        InlineKeyboardMarkup keyboard = InlineKeyboardMarkup.builder()
+                .keyboardRow(row)
+                .build();
+
         SendMessage msg = SendMessage.builder()
                 .chatId(chatId)
-                .text("🎬 Trailer:\n" + url)
+                .text("🎬 Trailer – " + gameName)
+                .replyMarkup(keyboard)
                 .build();
 
         try {
@@ -295,7 +318,35 @@ public class GameSender {
         }
     }
 
+
+
+
+
+/*
+    public static void sendTrailer(TelegramClient client, long chatId, String trailerUrl, GameResponse gameResponse) {
+        SendVideo video = SendVideo.builder()
+                .chatId(chatId)
+                .video(new InputFile(trailerUrl))
+                .caption("🎬 Trailer – " + gameResponse.results.get(0).name)
+                .build();
+
+
+        SendMessage msg = SendMessage.builder()
+                .chatId(chatId)
+                .text("🎬 Trailer:\n" + url)
+                .build();
+
+
+        try {
+            client.execute(video);
+        } catch (TelegramApiException e) {
+            System.err.println("Errore sendTrailer: " + e.getMessage());
+        }
+    }
+
+    */
+
     public static void sendNoTrailer(TelegramClient client, long chatId) {
-        sendMessage(client, chatId, "🎬 Trailer non disponibile per questo gioco.");
+        sendMessage(client, chatId, "🎬 Trailer non disponibile per questo gioco");
     }
 }
