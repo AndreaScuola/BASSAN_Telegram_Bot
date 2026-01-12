@@ -11,4 +11,5 @@ public class Game {
     public String background_image;
     public List<PlatformWrapper> platforms;
     public List<Genre> genres;
+    public List<Publisher> publishers;
 }

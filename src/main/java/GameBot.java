@@ -256,6 +256,35 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
             }
             //#endregion
 
+            //#region /samepublisher <nome>
+            else if (messageText.startsWith("/samepublisher")) {
+                String[] parts = messageText.split(" ", 2);
+
+                if (parts.length < 2 || parts[1].isBlank()) {
+                    GameSender.sendMessage(telegramClient,chatId, "Uso corretto:\n/samepublisher <nome del gioco>");
+                    return;
+                }
+
+                String gameName = parts[1];
+
+                try {
+                    List<Game> games = rawgService.selectGamesBySamePublisher(gameName, 5);
+
+                    if (games.isEmpty()) {
+                        GameSender.sendEmptyGameList(telegramClient, chatId, "❌ Nessun gioco trovato con lo stesso publisher");
+                        return;
+                    }
+
+                    GameSender.sendMarkdownMessage(telegramClient, chatId, "🏢 Ecco alcuni giochi dello stesso editore di* " + gameName + "*:");
+                    for (Game g : games)
+                        GameSender.sendGame(telegramClient, chatId, g, telegramId);
+                } catch (Exception e) {
+                    GameSender.sendMessage(telegramClient, chatId, "❌ Errore RAWG");
+                }
+                return;
+            }
+            //#endregion
+
             //#region /random
             else if (messageText.startsWith("/random")) {
                 String[] parts = messageText.split(" ");

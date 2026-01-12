@@ -121,9 +121,7 @@ public class RawgService extends ApiClient {
     }
 
     public List<Game> recommendByGenres(String genres, int limit) {
-        String params = "genres=" + encode(genres) +
-                        "&ordering=-rating" +
-                        "&page_size=" + limit;
+        String params = "genres=" + encode(genres) + "&ordering=-rating" + "&page_size=" + limit;
 
         var response = getHttpResponse(getRawgUrl("games", params));
         GameResponse gameResponse = new Gson().fromJson(response.body(), GameResponse.class);
@@ -176,4 +174,32 @@ public class RawgService extends ApiClient {
 
         return tr.results.get(0).data.max;
     }
+
+    public List<Game> selectGamesBySamePublisher(String gameName, int limit) {
+        GameResponse gameResponse = selectGameByName(gameName);
+
+        if (gameResponse == null || gameResponse.results.isEmpty())
+            return new ArrayList<>();
+
+        int gameId = gameResponse.results.get(0).id;
+        Game game = selectGameById(gameId);
+
+        if (game.publishers == null || game.publishers.isEmpty())
+            return new ArrayList<>();
+
+        int publisherId = game.publishers.get(0).id;
+
+        //Cerco giochi stesso publisher
+        String params = "publishers=" + publisherId + "&page_size=" + limit;
+        var response = getHttpResponse(getRawgUrl("games", params));
+
+        if (response.statusCode() != 200){
+            System.err.println("ERRORE API RAWG samepublisher: " + response.statusCode());
+            return new ArrayList<>();
+        }
+
+        GameResponse gr = gson.fromJson(response.body(), GameResponse.class);
+        return gr.results;
+    }
+
 }
