@@ -1,7 +1,4 @@
-import modelli.Game;
-import modelli.GameResponse;
-import modelli.Genre;
-import modelli.PlatformWrapper;
+import modelli.*;
 import org.telegram.telegrambots.meta.api.methods.send.SendAnimation;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
@@ -284,14 +281,6 @@ public class GameSender {
         }
     }
 
-
-
-
-
-
-
-
-
     public static void sendTrailer(TelegramClient client, long chatId, String trailerUrl, String gameName) {
         InlineKeyboardButton btn = InlineKeyboardButton.builder()
                 .text("▶️ Guarda Trailer")
@@ -318,35 +307,30 @@ public class GameSender {
         }
     }
 
-
-
-
-
-/*
-    public static void sendTrailer(TelegramClient client, long chatId, String trailerUrl, GameResponse gameResponse) {
-        SendVideo video = SendVideo.builder()
-                .chatId(chatId)
-                .video(new InputFile(trailerUrl))
-                .caption("🎬 Trailer – " + gameResponse.results.get(0).name)
-                .build();
-
-
-        SendMessage msg = SendMessage.builder()
-                .chatId(chatId)
-                .text("🎬 Trailer:\n" + url)
-                .build();
-
-
-        try {
-            client.execute(video);
-        } catch (TelegramApiException e) {
-            System.err.println("Errore sendTrailer: " + e.getMessage());
-        }
-    }
-
-    */
-
     public static void sendNoTrailer(TelegramClient client, long chatId) {
         sendMessage(client, chatId, "🎬 Trailer non disponibile per questo gioco");
+    }
+
+    public static void sendDeal(TelegramClient client, long chatId, CheapSharkDeal deal) {
+        String text = """
+        💸 *%s*
+        🔻 -%s%%
+        💰 %s€ _(era %s€)_
+        🔗 https://www.cheapshark.com/redirect?dealID=%s
+        """.formatted(deal.title, deal.savings.split("\\.")[0], deal.salePrice, deal.normalPrice, deal.dealID);
+
+        sendMarkdownMessage(client, chatId, text);
+    }
+
+    public static void sendCheapestDeal(TelegramClient client, long chatId, CheapSharkDeal deal) {
+        String text = """
+                💎 *Miglior prezzo per %s*
+                🔻 -%s%%
+                💰 %s€ _(era %s€)_
+                🛒 CheapShark
+                🔗 https://www.cheapshark.com/redirect?dealID=%s
+                """.formatted(deal.title, deal.savings.split("\\.")[0], deal.salePrice, deal.normalPrice, deal.dealID);
+
+        sendMarkdownMessage(client, chatId, text);
     }
 }

@@ -13,11 +13,13 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
     private final TelegramClient telegramClient;
     private final RawgService rawgService;
     private final SteamService steamService;
+    private final CheapSharkService cheapSharkService;
 
     public GameBot(String botToken) {
         telegramClient = new OkHttpTelegramClient(botToken);
         rawgService = new RawgService();
         steamService = new SteamService();
+        cheapSharkService = new CheapSharkService();
     }
 
     @Override
@@ -553,6 +555,56 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
                 GameSender.sendMarkdownMessage(telegramClient, chatId, response);
                 return;
             }
+            //#endregion
+
+            //#region /deals <nome>
+            else if (messageText.startsWith("/deals")) {
+                String[] parts = messageText.split(" ", 2);
+
+                if (parts.length < 2 || parts[1].isBlank()) {
+                    GameSender.sendMessage(telegramClient, chatId, "Uso corretto:\n/deals <nome del gioco>");
+                    return;
+                }
+
+                String gameName = parts[1];
+                List<CheapSharkDeal> deals = cheapSharkService.getDeals(gameName, 5);
+
+                if (deals.isEmpty()) {
+                    GameSender.sendMarkdownMessage(telegramClient, chatId, "❌ Nessuna offerta trovata per *" + gameName + "*");
+                    return;
+                }
+
+                GameSender.sendMarkdownMessage(telegramClient, chatId, "💸 Migliori offerte per *" + gameName + "*:");
+
+                for (CheapSharkDeal deal : deals) {
+                    GameSender.sendDeal(telegramClient, chatId, deal);
+                }
+
+                return;
+            }
+            //#endregion
+
+            //#region /cheapest <nome>
+            else if (messageText.startsWith("/cheapest")) {
+                String[] parts = messageText.split(" ", 2);
+
+                if (parts.length < 2 || parts[1].isBlank()) {
+                    GameSender.sendMessage(telegramClient, chatId, "Uso corretto:\n/cheapest <nome del gioco>");
+                    return;
+                }
+
+                String gameName = parts[1];
+                CheapSharkDeal deal = cheapSharkService.getCheapestDeal(gameName);
+
+                if (deal == null) {
+                    GameSender.sendMarkdownMessage(telegramClient, chatId, "❌ Nessuna offerta trovata per *" + gameName + "*");
+                    return;
+                }
+
+                GameSender.sendCheapestDeal(telegramClient, chatId, deal);
+                return;
+            }
+
             //#endregion
 
             //#region comandi non riconosciuti
