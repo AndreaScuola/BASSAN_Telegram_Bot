@@ -62,8 +62,12 @@ public class GameSender {
             /wishlist — La tua wishlist
             /steam <nome> — Prezzi e sconti Steam
             /steamwishlist — Sconti sui giochi in wishlist
+            /deals <nome> - Mostra gli sconti più elevati per il gioco
+            /cheapest <nome> - Mostra lo sconto più elevato per il gioco
             /gameseries <nome> — Giochi della stessa serie
             /gamedlc <nome> — DLC ed espansioni
+            /samepublisher <nome> - Mostra altri giochi pubblicati dal publisher
+            /trailer <nome> - Mostra un trailer del gioco
             /genres — Tutti i generi disponibili
             /help — Lista completa dei comandi
             
@@ -83,37 +87,42 @@ public class GameSender {
                 ---
                 
                 🔍 *Ricerca giochi*
-                • /game <nome> — Cerca un videogioco  
-                • /gameseries <nome> — Giochi della stessa serie  
-                • /gamedlc <nome> — DLC ed espansioni del gioco  
-                • /genres — Lista di tutti i generi disponibili  
+                • /game <nome> — Cerca un videogioco
+                • /gameseries <nome> — Giochi della stessa serie
+                • /gamedlc <nome> — DLC ed espansioni del gioco
+                • /samepublisher <nome> — Giochi pubblicati dal publisher del gioco
+                • /samepublisher <nome> | <numero> — N giochi pubblicati dal publisher del gioco
+                • /trailer <nome> — Mostra un trailer del gioco
+                • /genres — Lista di tutti i generi disponibili
                 
                 ---
                 
                 🎲 *Giochi casuali*
-                • /random — Videogioco casuale  
-                • /random <numero> — N videogiochi casuali  
-                • /random genre <genere> — Random per genere  
-                • /random genre <genere> <numero> — N giochi random per genere  
+                • /random — Videogioco casuale
+                • /random <numero> — N videogiochi casuali
+                • /random genre <genere> — Random per genere
+                • /random genre <genere> <numero> — N giochi random per genere
                 
                 ---
                 
                 ⭐ *Consigli*
-                • /recommend <genere> — 5 giochi consigliati per genere  
-                • /recommend <genere> <numero> — N giochi consigliati  
+                • /recommend <genere> — 5 giochi consigliati per genere
+                • /recommend <genere> <numero> — N giochi consigliati
                 
                 ---
                 
                 📚 *Libreria & Wishlist*
-                • /library — La tua libreria personale  
-                • /wishlist — La tua wishlist  
-                • /stats — Statistiche personali  
+                • /library — La tua libreria personale
+                • /wishlist — La tua wishlist
+                • /stats — Statistiche personali
                 
                 ---
                 
-                💸 *Steam*
-                • /steam <nome> — Prezzo e sconti Steam  
-                • /steamwishlist — Sconti sui giochi in wishlist  
+                💸 *Prezzi*
+                • /steam <nome> — Prezzo e sconti Steam
+                • /steamwishlist — Sconti sui giochi in wishlist
+                • /deals <nome> — Sconti per il gioco specificato
+                • /cheapest <nome> — Lo sconto maggiore per il gioco
                 
                 ---
                 

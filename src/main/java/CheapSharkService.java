@@ -3,7 +3,6 @@ import com.google.gson.reflect.TypeToken;
 import modelli.CheapSharkDeal;
 
 import java.lang.reflect.Type;
-import java.net.http.HttpClient;
 import java.net.http.HttpResponse;
 import java.util.List;
 
