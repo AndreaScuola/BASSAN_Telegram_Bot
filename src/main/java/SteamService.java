@@ -14,8 +14,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 public class SteamService extends ApiClient{
-    private final HttpClient client = HttpClient.newHttpClient();
-    private final Gson gson = new Gson();
+    private final Gson gson;
+
+    public SteamService() {
+        gson = new Gson();
+    }
 
     public int getAppIdByName(String name) {
         try {

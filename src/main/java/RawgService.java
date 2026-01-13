@@ -199,6 +199,7 @@ public class RawgService extends ApiClient {
         }
 
         GameResponse gr = gson.fromJson(response.body(), GameResponse.class);
+        gr.results.get(0).publishers = game.publishers; //Per stampare il nome del publisher dal main
         return gr.results;
     }
 

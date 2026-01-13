@@ -1,16 +1,9 @@
-import modelli.GameResponse;
-import modelli.Game;
-import modelli.Genre;
-import modelli.SteamDiscountInfo;
+import modelli.*;
 import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient;
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.send.SendVideo;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
-import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
 import java.util.ArrayList;
@@ -19,8 +12,7 @@ import java.util.List;
 public class GameBot implements LongPollingSingleThreadUpdateConsumer {
     private final TelegramClient telegramClient;
     private final RawgService rawgService;
-    SteamService steamService;
-
+    private final SteamService steamService;
 
     public GameBot(String botToken) {
         telegramClient = new OkHttpTelegramClient(botToken);
@@ -258,29 +250,48 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
 
             //#region /samepublisher <nome>
             else if (messageText.startsWith("/samepublisher")) {
-                String[] parts = messageText.split(" ", 2);
+                String text = messageText.replace("/samepublisher", "").trim();
 
-                if (parts.length < 2 || parts[1].isBlank()) {
-                    GameSender.sendMessage(telegramClient,chatId, "Uso corretto:\n/samepublisher <nome del gioco>");
+                if (text.isBlank()) {
+                    GameSender.sendMessage(telegramClient, chatId, "Uso corretto:\n/samepublisher <nome del gioco>\n/samepublisher <nome del gioco> | <numero giochi>");
                     return;
                 }
 
-                String gameName = parts[1];
+                String gameName;
+                int limit = 5;
+
+                if (text.contains("|")) {
+                    String[] parts = text.split("\\|", 2);
+                    gameName = parts[0].trim();
+
+                    if (parts.length == 2 && isNumber(parts[1].trim()))
+                        limit = Integer.parseInt(parts[1].trim());
+                } else
+                    gameName = text;
 
                 try {
-                    List<Game> games = rawgService.selectGamesBySamePublisher(gameName, 5);
+                    List<Game> games = rawgService.selectGamesBySamePublisher(gameName, limit);
 
                     if (games.isEmpty()) {
                         GameSender.sendEmptyGameList(telegramClient, chatId, "❌ Nessun gioco trovato con lo stesso publisher");
                         return;
                     }
 
-                    GameSender.sendMarkdownMessage(telegramClient, chatId, "🏢 Ecco alcuni giochi dello stesso editore di* " + gameName + "*:");
-                    for (Game g : games)
+                    String publisherMessageText;
+                    if (games.get(0).publishers != null && !games.get(0).publishers.isEmpty() && games.get(0).publishers.get(0).name != null)
+                        publisherMessageText = "🏢 Ecco alcuni giochi pubblicati da *'" + games.get(0).publishers.get(0).name + "'*:";
+                    else
+                        publisherMessageText = "🏢 Ecco alcuni giochi dello stesso editore di *'" + gameName + "'*:";
+
+                    GameSender.sendMarkdownMessage(telegramClient, chatId, publisherMessageText);
+
+                    for (Game g : games) {
                         GameSender.sendGame(telegramClient, chatId, g, telegramId);
+                    }
                 } catch (Exception e) {
                     GameSender.sendMessage(telegramClient, chatId, "❌ Errore RAWG");
                 }
+
                 return;
             }
             //#endregion
@@ -528,7 +539,7 @@ public class GameBot implements LongPollingSingleThreadUpdateConsumer {
             }
             //#endregion
 
-            //#region /steam
+            //#region /steam <nome>
             else if (messageText.startsWith("/steam")) {
                 String[] parts = messageText.split(" ", 2);
 
