@@ -14,7 +14,7 @@ Il bot utilizza **API pubbliche** (RAWG e Steam Store API) e un **database local
 - ❤️ Wishlist personale  
 - 🧩 Giochi appartenenti alla stessa serie  
 - 🧱 DLC ed espansioni  
-- 💸 Prezzi e sconti Steam  
+- 💸 Prezzi e sconti
 - 🛒 Verifica sconti sui giochi in wishlist  
 - 📊 Statistiche personali  
 
@@ -30,6 +30,7 @@ Utilizzata per:
 - Generi
 - Serie di giochi
 - DLC
+- Trailer
 
 📚 Documentazione ufficiale:  
 https://rawg.io/apidocs  
@@ -49,6 +50,20 @@ Utilizzata per:
 https://partner.steamgames.com/doc/store/storefront  
 https://stackoverflow.com/questions/70147813/steam-api-endpoint-appdetails-params
 https://github.com/autarc/steam-store
+
+❗ **Non richiede API Key**
+
+---
+
+#### 💰 CheapShark API
+
+Utilizzata per:
+- Sconti attivi
+- Giveaway
+- Link a store online
+
+📚 Documentazione ufficiale:  
+https://apidocs.cheapshark.com
 
 ❗ **Non richiede API Key**
 
@@ -144,14 +159,18 @@ Ogni utente Telegram può salvare più giochi nella propria libreria e wishlist.
 |-------|------------|
 | `/gameseries <nome>` | Giochi della stessa serie |
 | `/gamedlc <nome>` | DLC ed espansioni |
+| `/samepublisher <nome> ` | Giochi dello stesso publisher del gioco |
+| `/trailer <nome>` | Trailer ufficiale del gioco |
 
 ---
 
-### 💸 Steam
+### 💸 Sconti e prezzi
 | Comando | Descrizione |
 |-------|------------|
 | `/steam <nome>` | Prezzo e sconto Steam |
 | `/steamwishlist` | Controlla sconti per la wishlist |
+| `/deals <nome>` | Sconti attivi su varie piattaforme |
+| `/cheapest <nome>` | Migliore sconto attivo |
 
 ---
 
